@@ -1,6 +1,9 @@
 import numpy as np
 import argparse
 import pickle
+import torch
+
+from dataset import TensorDataset
 
 def get_dict(vocab_path):
     dict = {}
@@ -41,8 +44,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     glove_dict = get_dict(args.vocab_path)
-    max_value = np.max(np.array(list(glove_dict.values())))
-    min_value = np.min(np.array(list(glove_dict.values())))
+    max_value = np.array([float(np.max(np.array(list(glove_dict.values()))))] * args.embedding_dim)
+    min_value = np.array([float(np.min(np.array(list(glove_dict.values()))))] * args.embedding_dim)
     mean_value = np.mean(np.array(list(glove_dict.values())), axis=0)
 
     sample_list = []
@@ -58,20 +61,21 @@ if __name__ == "__main__":
         sent_embedding = np.array([[0] * args.embedding_dim] * args.sent_length, dtype=float)
         text_list = sample_list[i][0].split()
         label = sample_list[i][1]
-        # padding
         for i in range(args.sent_length):
             if i >= len(text_list):
-                embedding = mean_value
+                embedding = np.array([0] * args.embedding_dim, dtype=float) # zero padding
             else:
                 word = text_list[i]
                 embedding = glove_dict[word] if word in glove_dict.keys() else mean_value
+                embedding = (embedding - min_value) / (max_value - min_value) # normalize
             sent_embedding[i] = embedding
-        embedding_tuple_list.append((sent_embedding, label))
-        
-    # save dict
-    with open('data/glove.{}d.dict'.format(args.embedding_dim), 'wb') as f:
-        pickle.dump(glove_dict, f, -1)
+        # print(i, sent_embedding)
+        embedding_tuple_list.append((torch.tensor(sent_embedding), label))
+    
+    dataset = TensorDataset(embedding_tuple_list)
+    # print(dataset[0])
 
-    # read dict
-    # with open('data/glove.100d.dict', 'rb') as f:
-    #     tuple_dataset = pickle.load(f)
+    # save dataset
+    with open('data/sst_2glove{}d.tensor_dataset'.format(args.embedding_dim), 'wb') as f:
+        pickle.dump(dataset, f, -1)
+
