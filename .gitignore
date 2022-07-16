@@ -4,3 +4,4 @@ __pycache__/
 
 # data folder
 data
+snnTorch/docs/*
