@@ -46,23 +46,13 @@ if __name__ == "__main__":
     glove_dict = get_dict(args.vocab_path)
     max_vevtor = np.array([float(np.max(np.array(list(glove_dict.values()))))] * args.embedding_dim)
     min_vector = np.array([float(np.min(np.array(list(glove_dict.values()))))] * args.embedding_dim)
-    mean_vector = np.mean(np.array(list(glove_dict.values())), axis=0)
+    mean_embedding = np.mean(np.array(list(glove_dict.values())), axis=0)
     mean_value = np.mean(list(glove_dict.values()))
     variance_value = np.var(list(glove_dict.values()))
-    left_boundary = mean_value - 3 * variance_value
-    right_boundary = mean_value + 3 * variance_value
-
-    # need to be optimized
-    all_data_within_boundary = []
-    for value in glove_dict.values():
-        for d in value:
-            if d >= left_boundary and d <= right_boundary:
-                all_data_within_boundary.append(d)
-
-    max_value = np.max(all_data_within_boundary)
-    # print(max_value)
-    min_value = np.min(all_data_within_boundary)
-    # print(min_value)
+    left_boundary = mean_value - 3 * np.sqrt(variance_value)
+    print(left_boundary)
+    right_boundary = mean_value + 3 * np.sqrt(variance_value)
+    print(right_boundary)
 
     sample_list = []
     with open(args.data_path, "r") as f:
@@ -82,15 +72,19 @@ if __name__ == "__main__":
                 embedding_norm = np.array([0] * args.embedding_dim, dtype=float) # zero padding
             else:
                 word = text_list[j]
-                embedding = glove_dict[word] if word in glove_dict.keys() else mean_vector
+                embedding = glove_dict[word] if word in glove_dict.keys() else mean_embedding
+                # N(0, 1)
+                embedding = (embedding - np.array([mean_value] * args.embedding_dim)) / np.array([np.sqrt(variance_value)] * args.embedding_dim)
                 embedding_norm = np.array([0] * args.embedding_dim, dtype=float)
                 for k in range(args.embedding_dim):
                     if embedding[k] < left_boundary:
-                        embedding_norm[k] = 0
+                        embedding_norm[k] = left_boundary
                     elif embedding[k] > right_boundary:
-                        embedding_norm[k] = 1
+                        embedding_norm[k] = right_boundary
                     else:
-                        embedding_norm[k] = (embedding[k] - min_value) / (max_value - min_value)
+                        embedding_norm[k] = embedding[k]
+                # add abs(left_embedding)
+                embedding_norm = embedding_norm + np.array([np.abs(left_boundary)] * args.embedding_dim)
             sent_embedding[j] = embedding_norm
         # print(i, sent_embedding)
         embedding_tuple_list.append((torch.tensor(sent_embedding), label))
@@ -98,6 +92,6 @@ if __name__ == "__main__":
     dataset = TensorDataset(embedding_tuple_list)
 
     # save dataset
-    with open('data/new_sst_2_glove{}d.tensor_dataset'.format(args.embedding_dim), 'wb') as f:
+    with open('data/u_3v_sst_2_glove{}d.tensor_dataset'.format(args.embedding_dim), 'wb') as f:
         pickle.dump(dataset, f, -1)
 
