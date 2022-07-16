@@ -12,3 +12,16 @@ class TensorDataset(Dataset):
         embedding = self.data[index][0]
         label = int(self.data[index][1])
         return embedding, label
+
+class RateDataset(Dataset):
+    def __init__(self, data: str):
+        super(RateDataset, self).__init__()
+        self.data = data
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, index: int):
+        rate_code = self.data[index][0]
+        label = int(self.data[index][1])
+        return rate_code, label

@@ -1,6 +1,7 @@
 import numpy as np
 import pickle
 from torch.utils.data import Dataset, DataLoader
+from snntorch import spikegen
 
 # with open('data/sst2_glove100d.tensor_dataset', 'rb') as f:
 #     dataset = pickle.load(f)

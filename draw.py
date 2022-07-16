@@ -45,7 +45,7 @@ if __name__ == "__main__":
     for value in np.array(list(glove_dict.values())):
         for d in value:
             all_num.append(d)
-    start = min_value  # 区间左端点
+    start = mean_value - 10 * np.sqrt(variance_value)  # 区间左端点
     length = np.sqrt(variance_value)  # 区间长度
     number_of_interval = 20  # 区间个数
     intervals = {'{:.3f}~{:.3f}'.format(length * x + start, length * (x+1) + start): 0 for x in range(number_of_interval)}
