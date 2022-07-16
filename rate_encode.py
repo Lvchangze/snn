@@ -33,37 +33,29 @@ class Net(nn.Module):
         self.fc2 = nn.Linear(num_hidden, num_outputs)
         self.lif2 = snn.Leaky(beta=beta, spike_grad=spike_grad, output=True)
 
+    # for one time step
     def forward(self, x):
-
         # Initialize hidden states at t=0
         mem1 = self.lif1.init_leaky()
         mem2 = self.lif2.init_leaky()
 
-        # Record the final layer
-        spk2_rec = []
-        mem2_rec = []
-
-        for step in range(num_steps):
-            cur1 = self.fc1(x)
-            spk1, mem1 = self.lif1(cur1, mem1)
-            cur2 = self.fc2(spk1)
-            spk2, mem2 = self.lif2(cur2, mem2)
-            spk2_rec.append(spk2)
-            mem2_rec.append(mem2)
-
-        return torch.stack(spk2_rec, dim=0), torch.stack(mem2_rec, dim=0)
+        cur1 = self.fc1(x)
+        spk1, mem1 = self.lif1(cur1, mem1)
+        cur2 = self.fc2(spk1)
+        spk2, mem2 = self.lif2(cur2, mem2)
+        # spk2[:,-1] is the logit in this step
+        return spk2[:,-1], mem2
 
 
 if __name__ == "__main__":
     rate_data = []
     with open("data/u_3v_sst_2_glove100d.tensor_dataset", "rb") as f:
         dataset = pickle.load(f)
-    for i in tqdm(range(int(len(dataset)/100))):
+    for i in tqdm(range(int(len(dataset)/1))):
         tuple = dataset[i]
         old_embedding = torch.reshape(tuple[0], (-1, 3000))
         tmp = (torch.tensor(spikegen.rate(old_embedding, num_steps=num_steps), dtype=torch.float), tuple[1])
         rate_data.append(tmp)
-
     net = Net().to(device)
     optimizer = torch.optim.Adam(net.parameters(), lr=5e-4, betas=(0.9, 0.999))
     loss_fn = SF.ce_rate_loss()
