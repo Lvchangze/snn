@@ -2,7 +2,7 @@ import numpy as np
 import argparse
 import pickle
 import torch
-
+from tqdm import tqdm
 from dataset import TensorDataset
 
 def get_dict(vocab_path):
@@ -44,9 +44,25 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     glove_dict = get_dict(args.vocab_path)
-    max_value = np.array([float(np.max(np.array(list(glove_dict.values()))))] * args.embedding_dim)
-    min_value = np.array([float(np.min(np.array(list(glove_dict.values()))))] * args.embedding_dim)
-    mean_value = np.mean(np.array(list(glove_dict.values())), axis=0)
+    max_vevtor = np.array([float(np.max(np.array(list(glove_dict.values()))))] * args.embedding_dim)
+    min_vector = np.array([float(np.min(np.array(list(glove_dict.values()))))] * args.embedding_dim)
+    mean_vector = np.mean(np.array(list(glove_dict.values())), axis=0)
+    mean_value = np.mean(list(glove_dict.values()))
+    variance_value = np.var(list(glove_dict.values()))
+    left_boundary = mean_value - 3 * variance_value
+    right_boundary = mean_value + 3 * variance_value
+
+    # need to be optimized
+    all_data_within_boundary = []
+    for value in glove_dict.values():
+        for d in value:
+            if d >= left_boundary and d <= right_boundary:
+                all_data_within_boundary.append(d)
+
+    max_value = np.max(all_data_within_boundary)
+    # print(max_value)
+    min_value = np.min(all_data_within_boundary)
+    # print(min_value)
 
     sample_list = []
     with open(args.data_path, "r") as f:
@@ -57,25 +73,31 @@ if __name__ == "__main__":
             sample_list.append((sentence, label))
 
     embedding_tuple_list = []
-    for i in range(len(sample_list)):
+    for i in tqdm(range(len(sample_list))):
         sent_embedding = np.array([[0] * args.embedding_dim] * args.sent_length, dtype=float)
         text_list = sample_list[i][0].split()
         label = sample_list[i][1]
-        for i in range(args.sent_length):
-            if i >= len(text_list):
-                embedding = np.array([0] * args.embedding_dim, dtype=float) # zero padding
+        for j in range(args.sent_length):
+            if j >= len(text_list):
+                embedding_norm = np.array([0] * args.embedding_dim, dtype=float) # zero padding
             else:
-                word = text_list[i]
-                embedding = glove_dict[word] if word in glove_dict.keys() else mean_value
-                embedding = (embedding - min_value) / (max_value - min_value) # normalize
-            sent_embedding[i] = embedding
+                word = text_list[j]
+                embedding = glove_dict[word] if word in glove_dict.keys() else mean_vector
+                embedding_norm = np.array([0] * args.embedding_dim, dtype=float)
+                for k in range(args.embedding_dim):
+                    if embedding[k] < left_boundary:
+                        embedding_norm[k] = 0
+                    elif embedding[k] > right_boundary:
+                        embedding_norm[k] = 1
+                    else:
+                        embedding_norm[k] = (embedding[k] - min_value) / (max_value - min_value)
+            sent_embedding[j] = embedding_norm
         # print(i, sent_embedding)
         embedding_tuple_list.append((torch.tensor(sent_embedding), label))
     
     dataset = TensorDataset(embedding_tuple_list)
-    # print(dataset[0])
 
     # save dataset
-    with open('data/sst_2glove{}d.tensor_dataset'.format(args.embedding_dim), 'wb') as f:
+    with open('data/new_sst_2_glove{}d.tensor_dataset'.format(args.embedding_dim), 'wb') as f:
         pickle.dump(dataset, f, -1)
 
