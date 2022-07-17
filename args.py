@@ -5,6 +5,12 @@ import os
 class SNNArgs(argparse.Namespace):
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
+        # term for logging when doing tuning experiments
+        # if you want to add some new args for logging
+        # plz be careful to the changed saving and logging dirs
+        # SUGGESTION: write exp with args_for_logging and save them in every manytask json file 
+        self.args_for_logging = ['learning_rate', 'batch_size', 'epochs', 'beta']
+
         # training details
         self.mode = "train"
         self.dataset_name = 'sst2'
@@ -20,6 +26,8 @@ class SNNArgs(argparse.Namespace):
 
         # file saver
         # please modify the renew function together
+        self.data_path = "data/sst2/u_3v_sst_2_glove100d.tensor_dataset"
+        self.test_data_path = "data/sst2/test_u_3v_sst_2_glove100d.tensor_dataset"
         self.workspace = '/home/xujh/snn'
         self.data_dir = os.path.join(self.workspace, "data", self.dataset_name)
         self.logging_dir = os.path.join(self.workspace, 'logs')

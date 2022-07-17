@@ -2,10 +2,21 @@ import os
 import torch
 import numpy as np
 import random
+import logging
 
 def check_and_create_path(path: str):
     if not os.path.exists(path):
         os.makedirs(path)
+
+def output_message(message: str):
+    print(message)
+    logging.info(message)
+
+def save_model_to_file(save_path, model):
+    if save_path[-4:] != '.pth':
+        save_path = '{}.pth'.format(save_path)
+    torch.save(model.state_dict(), save_path)
+    logging.info('Saved model to {}'.format(save_path))
 
 def set_seed(seed=42):
     if seed is not None:

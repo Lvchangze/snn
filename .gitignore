@@ -7,3 +7,5 @@ data
 snnTorch/docs/*
 .vscode
 *.model
+logs/
+saved_models/
