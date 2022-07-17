@@ -92,6 +92,6 @@ if __name__ == "__main__":
     dataset = TensorDataset(embedding_tuple_list)
 
     # save dataset
-    with open('data/u_3v_sst_2_glove{}d.tensor_dataset'.format(args.embedding_dim), 'wb') as f:
+    with open('data/test_u_3v_sst_2_glove{}d.tensor_dataset'.format(args.embedding_dim), 'wb') as f:
         pickle.dump(dataset, f, -1)
 

@@ -32,11 +32,11 @@ def interval_statistics(data, intervals):
 if __name__ == "__main__":
     glove_dict = get_dict("data/glove.6B.100d.txt")
     max_value = np.max(np.array(list(glove_dict.values())))
-    print(max_value)
     min_value = np.min(np.array(list(glove_dict.values())))
-    print(min_value)
     mean_value = np.mean(list(glove_dict.values()))
+    print(mean_value)
     variance_value = np.var(list(glove_dict.values()))
+    print(variance_value)
     left_boundary = mean_value - 3 * np.sqrt(variance_value)
     print(left_boundary)
     right_boundary = mean_value + 3 * np.sqrt(variance_value)
