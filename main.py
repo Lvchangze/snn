@@ -1,4 +1,4 @@
-from ctypes.wintypes import tagRECT
+# from ctypes.wintypes import tagRECT
 import os
 import torch
 from torch.utils.data import DataLoader
@@ -41,7 +41,7 @@ def build_rated_dataset(args: SNNArgs, split='train'):
         assert hasattr(args, 'test_dataset')
         dataset = args.test_dataset
     rated_data = []
-    for i in range(len(dataset)//100):
+    for i in range(len(dataset)):
         item = dataset[i]
         tmp = (torch.tensor(spikegen.rate(item[0], num_steps=args.num_steps), dtype=torch.float), item[1])
         rated_data.append(tmp)

@@ -1,11 +1,12 @@
-__pycache__/
 *.py[cod]
 *$py.class
 
 # data folder
 data
+__pycache__
 snnTorch/docs/*
 .vscode
 *.model
-logs/
-saved_models/
+logs
+saved_models
+*.logs
