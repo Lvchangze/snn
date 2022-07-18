@@ -23,13 +23,13 @@ class SNNArgs(argparse.Namespace):
         self.num_steps = 10
         self.loss = 'cross_entropy'
         self.learning_rate = 5e-4
-        self.weight_decay = 0.01
+        self.weight_decay = 0
         self.optimizer_name = "Adamw"
 
         # file saver
         # please modify the renew function together
-        self.data_path = "data/sst2/u_3v_sst_2_glove100d.tensor_dataset"
-        self.test_data_path = "data/sst2/test_u_3v_sst_2_glove100d.tensor_dataset"
+        self.data_path = "data/sst2/train_u_3v_sst2_glove100d.tensor_dataset"
+        self.test_data_path = "data/sst2/test_u_3v_sst2_glove100d.tensor_dataset"
         self.workspace = '/home/xujh/snn'
         self.data_dir = os.path.join(self.workspace, "data", self.dataset_name)
         self.logging_dir = os.path.join(self.workspace, 'logs')

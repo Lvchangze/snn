@@ -1,10 +1,10 @@
+import sys
+sys.path.append("..")
+
 import numpy as np
 import os
 import pickle
 import torch
-import snntorch as snn
-import torch.nn as nn
-from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 from dataset import RateDataset
 from snntorch import spikegen

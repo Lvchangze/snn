@@ -3,7 +3,7 @@ import argparse
 import pickle
 import torch
 from tqdm import tqdm
-from dataset import TensorDataset
+from data_preprocess import TensorDataset
 
 def get_dict(vocab_path):
     dict = {}
