@@ -9,8 +9,8 @@ class SNNArgs(argparse.Namespace):
         # if you want to add some new args for logging
         # plz be careful to the changed saving and logging dirs
         # SUGGESTION: write exp with args_for_logging and save them in every manytask json file 
-        self.args_for_logging = ['learning_rate', 'batch_size', 'epochs', 'beta']
-
+        self.args_for_logging = ['optimizer_name','learning_rate', 'batch_size', 'epochs', 'beta']
+        
         # training details
         self.mode = "train"
         self.dataset_name = 'sst2'
@@ -23,6 +23,8 @@ class SNNArgs(argparse.Namespace):
         self.num_steps = 10
         self.loss = 'cross_entropy'
         self.learning_rate = 5e-4
+        self.weight_decay = 0.01
+        self.optimizer_name = "Adamw"
 
         # file saver
         # please modify the renew function together

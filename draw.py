@@ -27,12 +27,14 @@ def interval_statistics(data, intervals):
     for key, value in intervals.items():
         print("%10s" % key, end='')  # 借助 end=''可以不换行
         print("%10s" % value, end='')  # "%10s" 右对齐
-        print('%16s' % '{:.3%}'.format(value * 1.0 / len(data)))
+        print('%16s' % '{:.5%}'.format(value * 1.0 / len(data)))
 
 if __name__ == "__main__":
     glove_dict = get_dict("data/glove.6B.100d.txt")
     max_value = np.max(np.array(list(glove_dict.values())))
+    print(max_value)
     min_value = np.min(np.array(list(glove_dict.values())))
+    print(min_value)
     mean_value = np.mean(list(glove_dict.values()))
     print(mean_value)
     variance_value = np.var(list(glove_dict.values()))
@@ -48,5 +50,5 @@ if __name__ == "__main__":
     start = mean_value - 10 * np.sqrt(variance_value)  # 区间左端点
     length = np.sqrt(variance_value)  # 区间长度
     number_of_interval = 20  # 区间个数
-    intervals = {'{:.3f}~{:.3f}'.format(length * x + start, length * (x+1) + start): 0 for x in range(number_of_interval)}
+    intervals = {'{:.5f}~{:.5f}'.format(length * x + start, length * (x+1) + start): 0 for x in range(number_of_interval)}
     interval_statistics(all_num, intervals)

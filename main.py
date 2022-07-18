@@ -2,7 +2,8 @@
 import os
 import torch
 from torch.utils.data import DataLoader
-from torch.optim import AdamW
+from torch.optim import AdamW, SGD
+from torch.optim.lr_scheduler import LambdaLR, StepLR
 from tqdm import tqdm
 from dataset import RateDataset
 from utils.public import set_seed, save_model_to_file, output_message
@@ -78,9 +79,15 @@ def build_model(args: SNNArgs):
     return
 
 def build_optimizer(args: SNNArgs):
-    args.optimizer = AdamW(args.model.parameters(), lr=args.learning_rate, betas=(0.9, 0.999))
+    if args.optimizer_name == "Adamw":
+        args.optimizer = AdamW(args.model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay, betas=(0.9, 0.999))
+    elif args.optimizer_name == "SGD":
+        args.optimizer = SGD(args.model.parameters(), lr=args.learning_rate, momentum=0.9, weight_decay=args.weight_decay)
     return
 
+def bulid_scheduler(args: SNNArgs):
+    args.scheduler = StepLR(args.optimizer, step_size = 2 , gamma = 0.1)
+    return
 
 def predict_accuracy(args, dataloader, model, num_steps):
     def forward_pass(net, num_steps, data):
@@ -122,10 +129,11 @@ def main(args):
     build_model(args)
     build_optimizer(args)
     build_criterion(args)
+    bulid_scheduler(args)
     
     for epoch in tqdm(range(args.epochs)):
-        avg_loss = BPTT(args.model, args.train_dataloader, optimizer=args.optimizer, criterion=args.loss_fn,
-                            num_steps=False, time_var=True, time_first=False, device=args.device)
+        avg_loss = BPTT(args.model, args.train_dataloader, optimizer=args.optimizer, criterion=args.loss_fn, 
+                        num_steps=False, time_var=True, time_first=False, device=args.device)
         output_message("Training epoch {}, avg_loss: {}.".format(epoch, avg_loss))
         saved_path = FileCreater.build_saving_file(args,description="-epoch{}".format(epoch))
         save_model_to_file(save_path=saved_path, model=args.model)

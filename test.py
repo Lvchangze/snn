@@ -12,7 +12,7 @@ from snntorch import spikegen
 # print(np.var(a))
 # b = [4,4,4]
 # print(a[1] > b)
-print(spikegen.rate(torch.tensor([0], dtype=float), num_steps=20))
+# print(spikegen.rate(torch.tensor([0], dtype=float), num_steps=20))
 
 
 # print((np.array([1,2,3])-np.array([3,4,5]))/np.array([6,7,8]))
