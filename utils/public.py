@@ -17,6 +17,7 @@ def save_model_to_file(save_path, model):
         save_path = '{}.pth'.format(save_path)
     torch.save(model.state_dict(), save_path)
     logging.info('Saved model to {}'.format(save_path))
+    logging.info("The number of trainable parameters: {}".format(sum(p.numel() for p in model.parameters())))
 
 def set_seed(seed=42):
     if seed is not None:

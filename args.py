@@ -9,7 +9,7 @@ class SNNArgs(argparse.Namespace):
         # if you want to add some new args for logging
         # plz be careful to the changed saving and logging dirs
         # SUGGESTION: write exp with args_for_logging and save them in every manytask json file 
-        self.args_for_logging = ['optimizer_name','learning_rate', 'batch_size', 'epochs', 'beta']
+        self.args_for_logging = ['num_steps', 'epochs', 'optimizer_name', 'learning_rate', 'batch_size', 'epochs', 'beta']
         
         # training details
         self.mode = "train"

@@ -36,5 +36,5 @@ class RateEncoder():
 
 
 if __name__ == "__main__":
-    rate_encoder = RateEncoder(tensor_dataset_path="data/sst2/u_3v_sst_2_glove100d.tensor_dataset")
+    rate_encoder = RateEncoder(tensor_dataset_path="../data/sst2/train_u_3v_sst2_glove100d.tensor_dataset")
     rate_encoder.encode(num_steps=20)

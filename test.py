@@ -3,7 +3,7 @@ import pickle
 import torch
 from torch.utils.data import Dataset, DataLoader
 from snntorch import spikegen
-
+from model import TextCNN
 # with open('data/train_u_3v_sst2_glove100d.tensor_dataset', 'rb') as f:
 #     dataset = pickle.load(f)
 # a = [[1,2,3],[4,6,5],[7,8,9],[10,11,12]]
