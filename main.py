@@ -96,7 +96,7 @@ def predict_accuracy(args, dataloader, model, num_steps):
         reset(net)  # resets hidden states for all LIF neurons in net
 
         for step in range(num_steps):
-            spk_out, mem_out = net(data.transpose(1, 0)[step])
+            spks_1, spk_out, mem_out = net(data.transpose(1, 0)[step])
             spk_rec.append(spk_out)
             mem_rec.append(mem_out)
 

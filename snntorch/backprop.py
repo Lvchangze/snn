@@ -197,16 +197,26 @@ def TBPTT(
                 K_flag = K
             if K_flag is False:
                 K = num_steps
-
+        
         utils.reset(net)
+
+        num_of_1 = 0
+        total_num = 0
 
         for step in range(num_steps):
             if num_return == 2:
                 if time_var:
                     if time_first:
-                        spk, mem = net(data[step])
+                        spk_1, spk, mem = net(data[step])
                     else:
-                        spk, mem = net(data.transpose(1, 0)[step])
+                        spk_1, spk, mem = net(data.transpose(1, 0)[step])
+                    # print(spk_1.size()) # batch * dim
+                    
+                    total_num += len(spk_1) * 300
+                    for i in range(len(spk_1)):
+                        emb = spk_1[i]
+                        num_of_1 += sum(emb)
+                    
                 else:
                     spk, mem = net(data)
 
@@ -291,7 +301,7 @@ def TBPTT(
                 loss_trunc = 0
                 spk_rec_trunc = []
                 mem_rec_trunc = []
-
+        print((num_of_1/total_num).item())
         if (step == num_steps - 1) and (num_steps % K):
             spk_rec_trunc = torch.stack(spk_rec_trunc, dim=0)
             mem_rec_trunc = torch.stack(mem_rec_trunc, dim=0)

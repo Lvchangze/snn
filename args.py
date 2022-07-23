@@ -28,9 +28,9 @@ class SNNArgs(argparse.Namespace):
 
         # file saver
         # please modify the renew function together
-        self.data_path = "data/sst2/train_u_3v_sst2_glove100d.tensor_dataset"
-        self.test_data_path = "data/sst2/test_u_3v_sst2_glove100d.tensor_dataset"
-        self.workspace = '/home/xujh/snn'
+        self.data_path = "data/train_u_3v_sst2_glove100d.tensor_dataset"
+        self.test_data_path = "data/test_u_3v_sst2_glove100d.tensor_dataset"
+        self.workspace = '/home/lvchangze/snn'
         self.data_dir = os.path.join(self.workspace, "data", self.dataset_name)
         self.logging_dir = os.path.join(self.workspace, 'logs')
         self.saving_dir = os.path.join(self.workspace, "saved_models")

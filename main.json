@@ -1,17 +1,15 @@
 {
     "executor": "python main.py",
-    "cuda": [0,1,2,3],
-    "concurrency": 4,
+    "cuda": [0],
+    "concurrency": 1,
     "configs": {
-        "==base==": [
-            "--workspace", ["/home/lvchangze/preprocess_sst2"]
-        ],
+        "==base==": [],
         "==more==": [
             [
-                "--num_steps",     ["50", "60"],
+                "--num_steps",     ["10"],
                 "--batch_size",    ["32"],
                 "--optimizer_name",["Adamw"],
-                "--learning_rate", ["1e-4","5e-4"],
+                "--learning_rate", ["5e-4"],
                 "--beta",          ["0.95"],
                 "--epochs",         ["20"]
             ]
