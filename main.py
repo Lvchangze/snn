@@ -67,6 +67,14 @@ def build_surrogate(args: SNNArgs):
         args.spike_grad = surrogate.fast_sigmoid()
     elif args.surrogate == 'sigmoid':
         args.spike_grad = surrogate.sigmoid()
+    elif args.surrogate == 'atan':
+        args.spike_grad = surrogate.atan()
+    elif args.surrogate == 'spike_rate_escape':
+        args.spike_grad = surrogate.spike_rate_escape()
+    elif args.surrogate == 'straight_through_estimator':
+        args.spike_grad = surrogate.straight_through_estimator()
+    elif args.surrogate == 'triangular':
+        args.spike_grad = surrogate.triangular()
     return
 
 def build_criterion(args: SNNArgs):

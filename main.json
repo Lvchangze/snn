@@ -1,17 +1,20 @@
 {
     "executor": "python main.py",
-    "cuda": [0],
-    "concurrency": 1,
+    "cuda": [0,1,2,3],
+    "concurrency": 4,
     "configs": {
-        "==base==": [],
+        "==base==": [
+        ],
         "==more==": [
             [
-                "--num_steps",     ["10"],
-                "--batch_size",    ["32"],
-                "--optimizer_name",["Adamw"],
-                "--learning_rate", ["5e-4"],
-                "--beta",          ["0.95"],
-                "--epochs",         ["20"]
+                "--sentence_length",["30"],
+                "--num_steps",      ["20"],
+                "--batch_size",     ["32"],
+                "--optimizer_name", ["Adamw"],
+                "--learning_rate",  ["5e-4"],
+                "--beta",           ["0.95"],
+                "--epochs",         ["20"],
+                "--surrogate",      ["sigmoid", "atan", "spike_rate_escape", "straight_through_estimator", "triangular"]
             ]
         ]
     }
