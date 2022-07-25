@@ -140,8 +140,9 @@ def main(args):
     bulid_scheduler(args)
     
     for epoch in tqdm(range(args.epochs)):
-        avg_loss = BPTT(args.model, args.train_dataloader, optimizer=args.optimizer, criterion=args.loss_fn, 
+        spike_rate, avg_loss = BPTT(args.model, args.train_dataloader, optimizer=args.optimizer, criterion=args.loss_fn, 
                         num_steps=False, time_var=True, time_first=False, device=args.device)
+        logging.info("Spike Rate: {}".format(spike_rate))
         output_message("Training epoch {}, avg_loss: {}.".format(epoch, avg_loss))
         saved_path = FileCreater.build_saving_file(args,description="-epoch{}".format(epoch))
         save_model_to_file(save_path=saved_path, model=args.model)

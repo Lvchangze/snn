@@ -180,6 +180,9 @@ def TBPTT(
 
     net = net.to(device)
 
+    num_of_1 = 0
+    total_num = 0
+
     data_iterator = iter(dataloader)
     for data, targets in data_iterator:
         iter_count += 1
@@ -200,23 +203,16 @@ def TBPTT(
         
         utils.reset(net)
 
-        # num_of_1 = 0
-        # total_num = 0
-
         for step in range(num_steps):
             if num_return == 2:
                 if time_var:
                     if time_first:
-                        spk_1, spk, mem = net(data[step])
+                        spks_1, spk, mem = net(data[step])
                     else:
-                        spk_1, spk, mem = net(data.transpose(1, 0)[step])
-                    # print(spk_1.size()) # batch * dim
-                    
-                    # total_num += len(spk_1) * 300
-                    # for i in range(len(spk_1)):
-                    #     emb = spk_1[i]
-                    #     num_of_1 += sum(emb)
-                    
+                        spks_1, spk, mem = net(data.transpose(1, 0)[step])
+
+                    num_of_1 += torch.sum(spks_1).cpu().detach().numpy()
+                    total_num += len(spks_1) * len(spks_1[0])
                 else:
                     spk, mem = net(data)
 
@@ -346,7 +342,8 @@ def TBPTT(
                 if neuron:
                     neurons_dict[neuron].detach_hidden()
 
-    return loss_avg / iter_count  # , spk_rec, mem_rec
+    spike_rate = num_of_1 / total_num
+    return spike_rate, loss_avg / iter_count  # , spk_rec, mem_rec
 
 
 def BPTT(
