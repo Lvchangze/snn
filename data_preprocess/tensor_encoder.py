@@ -64,14 +64,15 @@ class TensorEncoder():
                         else:
                             embedding_norm[k] = embedding_n01[k]
                     # add abs(left_embedding)
-                    embedding_norm = (embedding_norm + np.array([np.abs(self.bias)] * self.embedding_dim))/(self.bias * 2)
+                    embedding_norm = (embedding_norm + np.array([np.abs(self.bias)] * self.embedding_dim))/(5)
+                    embedding_norm = np.clip(embedding_norm, a_min=0, a_max=1)
                 sent_embedding[j] = embedding_norm
             # print(i, sent_embedding)
             embedding_tuple_list.append((torch.tensor(sent_embedding), label))
         
         dataset = TensorDataset(embedding_tuple_list)
 
-        file_name = f"../data/{self.data_type}_u_{self.bias}v_{self.dataset_name}_glove{self.embedding_dim}d.tensor_dataset"
+        file_name = f"../data/just_for_test_{self.data_type}_u_{self.bias}v_{self.dataset_name}_glove{self.embedding_dim}d.tensor_dataset"
         if not os.path.exists(file_name):
             with open(file_name, 'wb') as f:
                 pickle.dump(dataset, f, -1)
@@ -81,11 +82,11 @@ class TensorEncoder():
 
 if __name__ == "__main__":
     tensor_encoder = TensorEncoder(
-        vocab_path="../data/glove.6B.100d.txt",
-        data_type="test",
-        datafile_path="../data/sst2/test.txt", 
+        vocab_path="../data/sst2/glove.6B.100d.txt",
+        data_type="train",
+        datafile_path="../data/sst2/train.txt", 
         dataset_name="sst2",
-        sent_length=30,
+        sent_length=25,
         embedding_dim=100,
         bias = 3
     )

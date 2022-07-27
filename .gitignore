@@ -10,3 +10,4 @@ snnTorch/docs/*
 logs
 saved_models
 *.logs
+*.json
