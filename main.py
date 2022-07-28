@@ -17,6 +17,7 @@ import snntorch.surrogate as surrogate
 from model import TextCNN
 import logging
 from utils.filecreater import FileCreater
+from utils.monitor import MONITOR_TENSOR_DICT, _EPOCH, Monitor
 
 def build_environment(args: SNNArgs):
     args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -84,6 +85,7 @@ def build_criterion(args: SNNArgs):
 
 def build_model(args: SNNArgs):
     args.model = TextCNN(args, spike_grad=args.spike_grad).to(args.device)
+    args.model.initial()
     return
 
 def build_optimizer(args: SNNArgs):
@@ -140,6 +142,8 @@ def main(args):
     bulid_scheduler(args)
     
     for epoch in tqdm(range(args.epochs)):
+        if args.dead_neuron_checker == "True":
+            _EPOCH = epoch
         spike_rate, avg_loss = BPTT(args.model, args.train_dataloader, optimizer=args.optimizer, criterion=args.loss_fn, 
                         num_steps=False, time_var=True, time_first=False, device=args.device)
         logging.info("Spike Rate: {}".format(spike_rate))

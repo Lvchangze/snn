@@ -35,13 +35,17 @@ class SNNArgs(argparse.Namespace):
         self.logging_dir = os.path.join(self.workspace, 'logs')
         self.saving_dir = os.path.join(self.workspace, "saved_models")
 
-        
         # network details
         self.surrogate = 'fast_sigmoid'
         self.beta = 0.95
         self.model_type = 'textcnn'
         self.filters = [3,4,5]
         self.filter_num = 100
+        self.inital_method = 'zero' # ['zero', 'normal', 'kaiming', 'xavier', 'k+n', 'k+x']
+        self.positive_init_rate = 0.7
+
+        # monitor
+        self.dead_neuron_checker = "False"
 
     def renew_args(self):
         self.data_dir = os.path.join(self.workspace, "data", self.dataset_name)
