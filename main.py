@@ -18,7 +18,7 @@ from model import TextCNN
 import logging
 import numpy as np
 from utils.filecreater import FileCreater
-from utils.monitor import MONITOR_TENSOR_DICT, _EPOCH, Monitor
+from utils.monitor import Monitor
 
 def build_environment(args: SNNArgs):
     args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -144,7 +144,8 @@ def main(args):
     dead_neuron_rate_list = []
     for epoch in tqdm(range(args.epochs)):
         if args.dead_neuron_checker == "True":
-            _EPOCH = epoch
+            Monitor._EPOCH = epoch
+            Monitor.create_epoch_monitor()
         dead_neuron_rate, avg_loss = BPTT(args.model, args.train_dataloader, optimizer=args.optimizer, criterion=args.loss_fn, 
                         num_steps=False, time_var=True, time_first=False, device=args.device)
         dead_neuron_rate_list.append(dead_neuron_rate)
@@ -154,6 +155,8 @@ def main(args):
         # save_model_to_file(save_path=saved_path, model=args.model)
         acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps)
         output_message("Test acc in epoch {} is: {}".format(epoch, acc))
+        if args.dead_neuron_checker == "True":
+            Monitor.print_results_by_epoch(epoch)
     output_message("Mean Dead_neuron_rate: {}".format(np.mean(dead_neuron_rate_list)))
     return
 

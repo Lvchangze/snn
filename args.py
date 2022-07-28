@@ -28,9 +28,9 @@ class SNNArgs(argparse.Namespace):
 
         # file saver
         # please modify the renew function together
-        self.data_path = f"data/new_train_u_3v_sst2_glove100d_sent_len{self.sentence_length}.tensor_dataset"
-        self.test_data_path = f"data/new_test_u_3v_sst2_glove100d_sent_len{self.sentence_length}.tensor_dataset"
-        self.workspace = '/home/lvchangze/snn'
+        self.data_path = f"data/sst2/new_train_u_3v_sst2_glove100d_sent_len{self.sentence_length}.tensor_dataset"
+        self.test_data_path = f"data/sst2/new_test_u_3v_sst2_glove100d_sent_len{self.sentence_length}.tensor_dataset"
+        self.workspace = '/home/xujh/snn'
         self.data_dir = os.path.join(self.workspace, "data", self.dataset_name)
         self.logging_dir = os.path.join(self.workspace, 'logs')
         self.saving_dir = os.path.join(self.workspace, "saved_models")
@@ -41,11 +41,11 @@ class SNNArgs(argparse.Namespace):
         self.model_type = 'textcnn'
         self.filters = [3,4,5]
         self.filter_num = 100
-        self.inital_method = 'zero' # ['zero', 'normal', 'kaiming', 'xavier', 'k+n', 'k+x']
+        self.initial_method = 'zero' # ['zero', 'normal', 'kaiming', 'xavier', 'k+n', 'k+x']
         self.positive_init_rate = 0.7
 
         # monitor
-        self.dead_neuron_checker = "False"
+        self.dead_neuron_checker = "True"
 
     def renew_args(self):
         self.data_dir = os.path.join(self.workspace, "data", self.dataset_name)

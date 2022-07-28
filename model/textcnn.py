@@ -5,7 +5,7 @@ import snntorch.surrogate as surrogate
 import snntorch as snn
 import numpy as np
 from utils.config import INITIAL_MEAN_DICT
-
+from utils.monitor import Monitor
 
 
 # INITIAL_MEAN_DICT = {
@@ -67,11 +67,12 @@ class TextCNN(nn.Module):
         conv_out = [conv(x) for conv in self.convs_1]
         pooled_out = [self.maxpool_1[i](conv_out[i]) for i in range(len(self.maxpool_1))]
         spks = [self.lif1(pooled) for pooled in pooled_out]
-        if self.dead_neuron_checker == "True":
-            pass
         spks_1 = torch.cat(spks, dim=1).view(batch_size, -1)
         cur2 = self.fc_1(spks_1)
         spk2, mem2 = self.lif2(cur2)
+        if self.dead_neuron_checker == "True":
+            temp_spks = spks_1.sum(dim=0)
+            Monitor.add_monitor(temp_spks, 0)
         return spks_1, spk2, mem2
         
     # def initial(self):
