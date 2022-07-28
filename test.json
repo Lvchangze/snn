@@ -1,0 +1,19 @@
+{
+    "executor": "python main.py",
+    "cuda": [0, 1, 2, 3],
+    "concurrency": 4,
+    "configs": {
+        "==base==": [
+            "--workspace", ["/home/lvchangze/snn"]
+        ],
+        "==more==": [
+            [
+                "--num_steps",     ["10"],
+                "--batch_size",    ["32"],
+                "--optimizer_name",["Adamw"],
+                "--learning_rate", ["5e-4"],
+                "--beta",          ["0.95"]
+            ]
+        ]
+    }
+}

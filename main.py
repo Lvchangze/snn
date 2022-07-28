@@ -16,6 +16,7 @@ from snntorch import spikegen
 import snntorch.surrogate as surrogate
 from model import TextCNN
 import logging
+import numpy as np
 from utils.filecreater import FileCreater
 from utils.monitor import MONITOR_TENSOR_DICT, _EPOCH, Monitor
 
@@ -140,18 +141,20 @@ def main(args):
     build_optimizer(args)
     build_criterion(args)
     bulid_scheduler(args)
-    
+    dead_neuron_rate_list = []
     for epoch in tqdm(range(args.epochs)):
         if args.dead_neuron_checker == "True":
             _EPOCH = epoch
-        spike_rate, avg_loss = BPTT(args.model, args.train_dataloader, optimizer=args.optimizer, criterion=args.loss_fn, 
+        dead_neuron_rate, avg_loss = BPTT(args.model, args.train_dataloader, optimizer=args.optimizer, criterion=args.loss_fn, 
                         num_steps=False, time_var=True, time_first=False, device=args.device)
-        logging.info("Spike Rate: {}".format(spike_rate))
+        dead_neuron_rate_list.append(dead_neuron_rate)
+        output_message("Dead_neuron_rate in epoch {}: {}.".format(epoch, dead_neuron_rate))
         output_message("Training epoch {}, avg_loss: {}.".format(epoch, avg_loss))
-        saved_path = FileCreater.build_saving_file(args,description="-epoch{}".format(epoch))
-        save_model_to_file(save_path=saved_path, model=args.model)
+        # saved_path = FileCreater.build_saving_file(args,description="-epoch{}".format(epoch))
+        # save_model_to_file(save_path=saved_path, model=args.model)
         acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps)
         output_message("Test acc in epoch {} is: {}".format(epoch, acc))
+    output_message("Mean Dead_neuron_rate: {}".format(np.mean(dead_neuron_rate_list)))
     return
 
 if __name__ == "__main__":

@@ -1,0 +1,18 @@
+{
+    "executor": "python main.py",
+    "cuda": [0,1,2,3],
+    "concurrency": 4,
+    "configs": {
+        "==base==": [
+        ],
+        "==more==": [
+            [
+                "--sentence_length",["25"],
+                "--num_steps",      ["20", "30"],
+                "--batch_size",     ["32"],
+                "--learning_rate",  ["5e-3"],
+                "--beta",           ["0.95"]
+            ]
+        ]
+    }
+}

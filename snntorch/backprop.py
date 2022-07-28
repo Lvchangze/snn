@@ -2,6 +2,8 @@ import snntorch as snn
 import torch
 from snntorch import utils
 from snntorch import functional as SF
+import numpy as np
+import logging
 
 
 # consider turning into a class s.t. dictionary params can be parsed at __init__
@@ -179,12 +181,11 @@ def TBPTT(
     spk_rec_trunc = []
 
     net = net.to(device)
-
-    num_of_1 = 0
-    total_num = 0
-
     data_iterator = iter(dataloader)
+
+    zero_index_in_this_epoch = np.arange(301)
     for data, targets in data_iterator:
+        
         iter_count += 1
         net.train()
         data = data.to(device)
@@ -202,8 +203,11 @@ def TBPTT(
                 K = num_steps
         
         utils.reset(net)
+        
+        zero_index_in_this_batch = np.arange(301)
 
         for step in range(num_steps):
+            zero_index_in_this_step = []
             if num_return == 2:
                 if time_var:
                     if time_first:
@@ -211,8 +215,13 @@ def TBPTT(
                     else:
                         spks_1, spk, mem = net(data.transpose(1, 0)[step])
 
-                    num_of_1 += torch.sum(spks_1).cpu().detach().numpy()
-                    total_num += len(spks_1) * len(spks_1[0])
+                    spks_1 = spks_1.cpu().detach().numpy()
+
+                    for i in range(len(spks_1[0])):
+                        if (spks_1[:, i] == 0).all():
+                            zero_index_in_this_step.append(i)
+                    zero_index_in_this_batch = np.intersect1d(zero_index_in_this_batch, zero_index_in_this_step)
+                    
                 else:
                     spk, mem = net(data)
 
@@ -297,7 +306,9 @@ def TBPTT(
                 loss_trunc = 0
                 spk_rec_trunc = []
                 mem_rec_trunc = []
-        # print((num_of_1/total_num).item())
+        
+        zero_index_in_this_epoch = np.intersect1d(zero_index_in_this_epoch, zero_index_in_this_batch)
+
         if (step == num_steps - 1) and (num_steps % K):
             spk_rec_trunc = torch.stack(spk_rec_trunc, dim=0)
             mem_rec_trunc = torch.stack(mem_rec_trunc, dim=0)
@@ -342,8 +353,8 @@ def TBPTT(
                 if neuron:
                     neurons_dict[neuron].detach_hidden()
 
-    spike_rate = num_of_1 / total_num
-    return spike_rate, loss_avg / iter_count  # , spk_rec, mem_rec
+    dead_neuron_rate = float(len(zero_index_in_this_epoch)/300)
+    return dead_neuron_rate, loss_avg / iter_count  # , spk_rec, mem_rec
 
 
 def BPTT(
