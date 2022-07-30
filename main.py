@@ -15,7 +15,6 @@ import snntorch.functional as SF
 from snntorch import spikegen
 import snntorch.surrogate as surrogate
 from model import TextCNN
-import logging
 import numpy as np
 from utils.filecreater import FileCreater
 from utils.monitor import Monitor
@@ -107,7 +106,7 @@ def predict_accuracy(args, dataloader, model, num_steps):
         reset(net)  # resets hidden states for all LIF neurons in net
 
         for step in range(num_steps):
-            spks_1, spk_out, mem_out = net(data.transpose(1, 0)[step])
+            _, spk_out, mem_out = net(data.transpose(1, 0)[step])
             spk_rec.append(spk_out)
             mem_rec.append(mem_out)
 

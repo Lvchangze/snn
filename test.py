@@ -6,15 +6,19 @@ from snntorch import spikegen
 from model import TextCNN
 from tqdm import tqdm
 import re
-
+import math
 # zero_index_in_this_batch = np.arange(301)
 # print(np.intersect1d(zero_index_in_this_batch, [0,1,3]))
 
-bias = 0.0364
+bias = 0.25
 
-w = torch.zeros(32, 300, dtype=float)
-print(w)
-torch.nn.init.kaiming_normal_(w)
+w = torch.empty(1, 100)
+torch.nn.init.kaiming_uniform_(w, a=math.sqrt(5))
 w = w + bias
 c = np.sum(w.cpu().detach().numpy() > 0)
-print(float(c/(100*100)))
+print(float(c/(1*100)))
+
+# torch.nn.init.xavier_normal_(w)
+# w = w + bias
+# c = np.sum(w.cpu().detach().numpy() > 0)
+# print(float(c/(300*2)))

@@ -7,11 +7,11 @@
         ],
         "==more==": [
             [
-                "--sentence_length",["25"],
-                "--num_steps",      ["20", "30"],
-                "--batch_size",     ["32"],
-                "--learning_rate",  ["5e-3"],
-                "--beta",           ["0.95"]
+                "--positive_init_rate", ["0.6"],
+                "--num_steps",          ["20", "30"],
+                "--learning_rate",      ["1e-4", "5e-4"],
+                "--beta",               ["1", "0.95"],
+                "--epochs",             ["30"]
             ]
         ]
     }

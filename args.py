@@ -9,7 +9,7 @@ class SNNArgs(argparse.Namespace):
         # if you want to add some new args for logging
         # plz be careful to the changed saving and logging dirs
         # SUGGESTION: write exp with args_for_logging and save them in every manytask json file 
-        self.args_for_logging = ['num_steps', 'sentence_length', 'epochs', 'learning_rate', 'batch_size']
+        self.args_for_logging = ['initial_method', 'positive_init_rate', 'num_steps', 'learning_rate', 'beta']
         
         # training details
         self.mode = "train"
@@ -30,7 +30,7 @@ class SNNArgs(argparse.Namespace):
         # please modify the renew function together
         self.data_path = f"data/sst2/new_train_u_3v_sst2_glove100d_sent_len{self.sentence_length}.tensor_dataset"
         self.test_data_path = f"data/sst2/new_test_u_3v_sst2_glove100d_sent_len{self.sentence_length}.tensor_dataset"
-        self.workspace = '/home/xujh/snn'
+        self.workspace = '/home/lvchangze/snn'
         self.data_dir = os.path.join(self.workspace, "data", self.dataset_name)
         self.logging_dir = os.path.join(self.workspace, 'logs')
         self.saving_dir = os.path.join(self.workspace, "saved_models")
@@ -42,10 +42,10 @@ class SNNArgs(argparse.Namespace):
         self.filters = [3,4,5]
         self.filter_num = 100
         self.initial_method = 'zero' # ['zero', 'normal', 'kaiming', 'xavier', 'k+n', 'k+x']
-        self.positive_init_rate = 0.7
+        self.positive_init_rate = 0.6
 
         # monitor
-        self.dead_neuron_checker = "True"
+        self.dead_neuron_checker = "False"
 
     def renew_args(self):
         self.data_dir = os.path.join(self.workspace, "data", self.dataset_name)

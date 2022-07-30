@@ -1,12 +1,23 @@
 import sys
 sys.path.append("..")
-
+import re
 import numpy as np
 import pickle
 import torch
 from tqdm import tqdm
 import os
 from dataset import TensorDataset
+
+
+def clean_tokenize(data, lower=False):
+    # recover some abbreviations
+    data = re.sub(r"\-", " ", data)
+    data = re.sub(r"\/", " ", data)
+    data = re.sub(r"\s{2,}", " ", data)
+    data = data.lower() if lower else data
+
+    # split all tokens, form a list
+    return [x.strip() for x in data.split() if x.strip()]
 
 class TensorEncoder():
     def __init__(self, vocab_path, dataset_name, datafile_path, sent_length:int, embedding_dim:int, data_type="trian", bias=3) -> None:
@@ -29,6 +40,7 @@ class TensorEncoder():
                 glove_dict[word] = vector
 
         mean_embedding = np.mean(np.array(list(glove_dict.values())), axis=0)
+        zero_embedding = np.array([0] * self.embedding_dim, dtype=float)
         mean_value = np.mean(list(glove_dict.values()))
         variance_value = np.var(list(glove_dict.values()))
         left_boundary = mean_value - self.bias * np.sqrt(variance_value)
@@ -45,14 +57,14 @@ class TensorEncoder():
         embedding_tuple_list = []
         for i in tqdm(range(len(sample_list))):
             sent_embedding = np.array([[0] * self.embedding_dim] * self.sent_length, dtype=float)
-            text_list = sample_list[i][0].split()
+            text_list = clean_tokenize(sample_list[i][0])
             label = sample_list[i][1]
             for j in range(self.sent_length):
                 if j >= len(text_list):
-                    embedding_norm = np.array([0] * self.embedding_dim, dtype=float) # zero padding
+                    embedding_norm = zero_embedding # zero padding
                 else:
                     word = text_list[j]
-                    embedding = glove_dict[word] if word in glove_dict.keys() else mean_embedding
+                    embedding = glove_dict[word] if word in glove_dict.keys() else zero_embedding
                     # N(0, 1)
                     embedding_n01 = (embedding - np.array([mean_value] * self.embedding_dim)) / np.array([np.sqrt(variance_value)] * self.embedding_dim)
                     embedding_norm = np.array([0] * self.embedding_dim, dtype=float)
@@ -64,15 +76,15 @@ class TensorEncoder():
                         else:
                             embedding_norm[k] = embedding_n01[k]
                     # add abs(left_embedding)
-                    embedding_norm = (embedding_norm + np.array([np.abs(self.bias)] * self.embedding_dim))/(5)
-                    embedding_norm = np.clip(embedding_norm, a_min=0, a_max=1)
+                    embedding_norm = (embedding_norm + np.array([np.abs(self.bias)] * self.embedding_dim))/(self.bias * 2)
+                    # embedding_norm = np.clip(embedding_norm, a_min=0, a_max=1)
                 sent_embedding[j] = embedding_norm
             # print(i, sent_embedding)
             embedding_tuple_list.append((torch.tensor(sent_embedding), label))
         
         dataset = TensorDataset(embedding_tuple_list)
 
-        file_name = f"../data/just_for_test_{self.data_type}_u_{self.bias}v_{self.dataset_name}_glove{self.embedding_dim}d.tensor_dataset"
+        file_name = f"../data/new_{self.data_type}_u_{self.bias}v_{self.dataset_name}_glove{self.embedding_dim}d_sent_len{self.sent_length}.tensor_dataset"
         if not os.path.exists(file_name):
             with open(file_name, 'wb') as f:
                 pickle.dump(dataset, f, -1)
@@ -82,7 +94,7 @@ class TensorEncoder():
 
 if __name__ == "__main__":
     tensor_encoder = TensorEncoder(
-        vocab_path="../data/sst2/glove.6B.100d.txt",
+        vocab_path="../data/glove.6B.100d.txt",
         data_type="train",
         datafile_path="../data/sst2/train.txt", 
         dataset_name="sst2",

@@ -7,25 +7,6 @@ import numpy as np
 from utils.config import INITIAL_MEAN_DICT
 from utils.monitor import Monitor
 
-
-# INITIAL_MEAN_DICT = {
-#     "kaiming_uniform": {
-#         0.6: 0.05,
-#         0.7: 0.098,
-#         0.8: 0.146,
-#     },
-#     "xavier_normal": {
-#         0.6: 0.0255,
-#         0.7: 0.0534,
-#         0.8: 0.0850,
-#     },
-#     "kaiming_normal": {
-#         0.6: 0.0364,
-#         0.7: 0.0735,
-#         0.8: 0.1190
-#     }
-# }
-
 class TextCNN(nn.Module):
     def __init__(self, args, spike_grad=surrogate.fast_sigmoid(slope=25)) -> None:
         super().__init__()
@@ -46,20 +27,24 @@ class TextCNN(nn.Module):
         self.positive_init_rate = args.positive_init_rate
     
     def initial(self):
-        if self.initial_method == 'kaiming' or self.initial_method == 'k+x':
-            for c in self.convs_1:
-                torch.nn.init.kaiming_normal_(c.weight.data)
-                c.weight.data.add_(INITIAL_MEAN_DICT[self.initial_method][self.positive_init_rate])
-        if self.initial_method != 'zero':
-            for m in self.modules():
-                if isinstance(m, nn.Linear):
-                    if self.initial_method == 'normal' or 'k+n':
-                        nn.init.normal_(m.weight.data, mean=INITIAL_MEAN_DICT[self.initial_method][self.positive_init_rate], std=0.01)
-                    elif self.initial_method == 'xavier' or self.initial_method == 'k+x':
-                        nn.init.xavier_normal_(m.weight.data)
-                        m.weight.data.add_(INITIAL_MEAN_DICT['xavier'][self.positive_init_rate])
+        for c in self.convs_1:
+            c.weight.data.add_(INITIAL_MEAN_DICT['conv-kaiming'][self.positive_init_rate])
+        m = self.fc_1
+        m.weight.data.add_(INITIAL_MEAN_DICT["linear-kaiming"][self.positive_init_rate])
 
-            # for m in 
+        # if self.initial_method == 'kaiming' or self.initial_method == 'k+x':
+        #     for c in self.convs_1:
+        #         # torch.nn.init.kaiming_normal_(c.weight.data)
+        #         c.weight.data.add_(INITIAL_MEAN_DICT['kaiming'][self.positive_init_rate])
+
+        # if self.initial_method != 'zero':
+        #     for m in self.modules():
+        #         if isinstance(m, nn.Linear):
+        #             if self.initial_method == 'normal' or 'k+n':
+        #                 nn.init.normal_(m.weight.data, mean=INITIAL_MEAN_DICT['normal'][self.positive_init_rate], std=0.01)
+        #             elif self.initial_method == 'xavier' or self.initial_method == 'k+x':
+        #                 nn.init.xavier_normal_(m.weight.data)
+        #                 m.weight.data.add_(INITIAL_MEAN_DICT['xavier'][self.positive_init_rate])
 
     def forward(self, x):
         batch_size = x.shape[0]
@@ -75,25 +60,3 @@ class TextCNN(nn.Module):
             Monitor.add_monitor(temp_spks, 0)
         return spks_1, spk2, mem2
         
-    # def initial(self):
-    #     if self.initial_method == 'kaiming_uniform':
-    #         for c in self.convs_1:
-    #             torch.nn.init.kaiming_uniform_(c.weight.data)
-    #             c.weight.data.add_(INITIAL_MEAN_DICT[self.initial_method][self.positive_init_rate])
-    #         m = self.fc_1
-    #         torch.nn.init.kaiming_uniform_(m.weight.data)
-    #         m.weight.data.add_(INITIAL_MEAN_DICT[self.initial_method][self.positive_init_rate])
-    #     elif self.initial_method == "xavier_normal":
-    #         for c in self.convs_1:
-    #             torch.nn.init.xavier_normal_(c.weight.data)
-    #             c.weight.data.add_(INITIAL_MEAN_DICT[self.initial_method][self.positive_init_rate])
-    #         m = self.fc_1
-    #         torch.nn.init.xavier_normal_(m.weight.data)
-    #         m.weight.data.add_(INITIAL_MEAN_DICT[self.initial_method][self.positive_init_rate])
-    #     elif self.initial_method == "kaiming_normal":
-    #         for c in self.convs_1:
-    #             torch.nn.init.kaiming_normal_(c.weight.data)
-    #             c.weight.data.add_(INITIAL_MEAN_DICT[self.initial_method][self.positive_init_rate])
-    #         m = self.fc_1
-    #         torch.nn.init.kaiming_normal_(m.weight.data)
-    #         m.weight.data.add_(INITIAL_MEAN_DICT[self.initial_method][self.positive_init_rate])
