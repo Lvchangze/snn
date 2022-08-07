@@ -1,18 +1,21 @@
 {
     "executor": "python main.py",
-    "cuda": [0, 1, 2, 3],
-    "concurrency": 4,
+    "cuda": [0,1,2,3],
+    "concurrency": 12,
+    "cuda_per_task": 1,
     "configs": {
         "==base==": [
-            "--workspace", ["/home/lvchangze/snn"]
+            "--workspace", ["/home/xujh/snn"]
         ],
         "==more==": [
             [
-                "--num_steps",     ["10"],
+                "--num_steps",     ["10", "20", "30", "40"],
                 "--batch_size",    ["32"],
                 "--optimizer_name",["Adamw"],
-                "--learning_rate", ["5e-4"],
-                "--beta",          ["0.95"]
+                "--learning_rate", ["1e-4","5e-4"],
+                "--beta",          ["0.95"],
+                "--initial_method", ["k+x"],
+                "--positive_init_rate", ["0.6", "0.7", "0.8"]
             ]
         ]
     }

@@ -6,6 +6,7 @@ from torch.optim import AdamW, SGD
 from torch.optim.lr_scheduler import LambdaLR, StepLR
 from tqdm import tqdm
 from dataset import RateDataset
+from data_preprocess.green_encoder import GreenEncoder
 from utils.public import set_seed, save_model_to_file, output_message
 from args import SNNArgs
 import pickle
@@ -25,6 +26,7 @@ def build_environment(args: SNNArgs):
     return
 
 def build_dataset(args: SNNArgs, split='train'):
+    output_message("Build dataset...")
     if not os.path.exists(args.data_path):
         raise Exception("dataset file not exist!")
     if split == 'train':
@@ -36,6 +38,7 @@ def build_dataset(args: SNNArgs, split='train'):
     return
 
 def build_rated_dataset(args: SNNArgs, split='train'):
+    output_message("Build rated_dataset...")
     if split == 'train':
         assert hasattr(args, "train_dataset")
         dataset = args.train_dataset
@@ -52,8 +55,27 @@ def build_rated_dataset(args: SNNArgs, split='train'):
     # args.rated_dataset = rated_dataset
     return
 
+def build_codebooked_dataset(args: SNNArgs, split='train'):
+    output_message("Build codebooked dataset...")
+    if split == 'train':
+        assert hasattr(args, "train_dataset")
+        dataset = args.train_dataset
+    elif split == 'test':
+        assert hasattr(args, 'test_dataset')
+        dataset = args.test_dataset
+    codebooked_data = []
+    encoder = GreenEncoder(args)
+    encoder.write_codebook()
+    for i in range(len(dataset)):
+        item = dataset[i]
+        tmp = (encoder.spike_gen(item[0]).clone().detach(), item[1])
+        codebooked_data.append(tmp)
+    codebooked_dataset = RateDataset(codebooked_data)
+    setattr(args, f'{split}_codebooked_dataset', codebooked_dataset)
+    return
 
 def build_dataloader(args: SNNArgs, dataset, split='train'):
+    output_message("Build dataloader...")
     if not hasattr(args, f'{split}_rated_dataset') or not hasattr(args, f'{split}_dataset'):
         raise Exception("No such dataset!")
     setattr(args, f'{split}_dataloader', DataLoader(dataset, batch_size=args.batch_size, shuffle=True))
@@ -84,11 +106,13 @@ def build_criterion(args: SNNArgs):
     return
 
 def build_model(args: SNNArgs):
+    output_message("Build model...")
     args.model = TextCNN(args, spike_grad=args.spike_grad).to(args.device)
     args.model.initial()
     return
 
 def build_optimizer(args: SNNArgs):
+    output_message("Build Optimizer...")
     if args.optimizer_name == "Adamw":
         args.optimizer = AdamW(args.model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay, betas=(0.9, 0.999))
     elif args.optimizer_name == "SGD":
@@ -96,6 +120,7 @@ def build_optimizer(args: SNNArgs):
     return
 
 def bulid_scheduler(args: SNNArgs):
+    output_message("Build scheduler...")
     args.scheduler = StepLR(args.optimizer, step_size = 2 , gamma = 0.1)
     return
 
@@ -130,17 +155,25 @@ def predict_accuracy(args, dataloader, model, num_steps):
 
 def main(args):
     build_dataset(args=args)
-    build_rated_dataset(args)
-    build_dataloader(args=args, dataset=args.train_rated_dataset)
     build_dataset(args=args, split='test')
-    build_rated_dataset(args, split='test')
-    build_dataloader(args=args, dataset=args.test_rated_dataset, split='test')
+    if args.use_codebook == 'False':
+        build_rated_dataset(args)
+        build_dataloader(args=args, dataset=args.train_rated_dataset)
+        build_rated_dataset(args, split='test')
+        build_dataloader(args=args, dataset=args.test_rated_dataset, split='test')
+    else:
+        build_codebooked_dataset(args=args)
+        build_dataloader(args=args, dataset=args.train_codebooked_dataset)
+        build_codebooked_dataset(args, split='test')
+        build_dataloader(args=args, dataset=args.test_codebooked_dataset, split='test')    
+
     build_surrogate(args=args)
     build_model(args)
     build_optimizer(args)
     build_criterion(args)
     bulid_scheduler(args)
     dead_neuron_rate_list = []
+    output_message("Training Begin")
     for epoch in tqdm(range(args.epochs)):
         if args.dead_neuron_checker == "True":
             Monitor._EPOCH = epoch
