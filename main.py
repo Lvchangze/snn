@@ -76,8 +76,8 @@ def build_codebooked_dataset(args: SNNArgs, split='train'):
 
 def build_dataloader(args: SNNArgs, dataset, split='train'):
     output_message("Build dataloader...")
-    if not hasattr(args, f'{split}_rated_dataset') or not hasattr(args, f'{split}_dataset'):
-        raise Exception("No such dataset!")
+    # if not hasattr(args, f'{split}_rated_dataset') or not hasattr(args, f'{split}_dataset'):
+    #     raise Exception("No such dataset!")
     setattr(args, f'{split}_dataloader', DataLoader(dataset, batch_size=args.batch_size, shuffle=True))
     # if split == 'train':
     #     args.train_dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)

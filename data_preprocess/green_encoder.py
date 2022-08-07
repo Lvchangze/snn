@@ -73,7 +73,7 @@ class GreenEncoder():
             raise Exception("No this codebook type!")
         torch_codebook = torch.tensor(codebook, dtype=torch.float)
         torch.save(torch_codebook, file_path)
-        self.codebook = codebook
+        self.codebook = torch_codebook
         return
 
     def spike_gen(self, input):
@@ -83,10 +83,14 @@ class GreenEncoder():
         bin_num = 1 << self.bit
         stride = 1. / bin_num
         bin_idx = torch.clamp(torch.floor(input / stride), max=bin_num-1).int()
-        output = torch.index_select(self.codebook, 0, bin_idx)
+        origin_shape = bin_idx.shape
+        flatten_bin_idx = bin_idx.view(-1)
+        output = torch.index_select(self.codebook, 0, flatten_bin_idx)
+        output = output.view(list(origin_shape)+[-1])
         repeat_shape = [1 for _ in range(len(output.shape))]
         repeat_shape[-1] = repeat_num
         output = output.repeat(repeat_shape)
+        output = output.permute(2, 0, 1)
         return output
 
 
