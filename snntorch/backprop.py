@@ -184,6 +184,7 @@ def TBPTT(
     data_iterator = iter(dataloader)
 
     zero_index_in_this_epoch = np.arange(301)
+    one_index_in_this_epoch = np.arange(301)
     for data, targets in data_iterator:
         
         iter_count += 1
@@ -205,9 +206,10 @@ def TBPTT(
         utils.reset(net)
         
         zero_index_in_this_batch = np.arange(301)
-
+        one_index_in_this_batch = np.arange(301)
         for step in range(num_steps):
             zero_index_in_this_step = []
+            one_index_in_this_step = []
             if num_return == 2:
                 if time_var:
                     if time_first:
@@ -220,7 +222,11 @@ def TBPTT(
                     for i in range(len(spks_1[0])):
                         if (spks_1[:, i] == 0).all():
                             zero_index_in_this_step.append(i)
+                        if (spks_1[:, i] == 1).all():
+                            one_index_in_this_step.append(i)
+                    
                     zero_index_in_this_batch = np.intersect1d(zero_index_in_this_batch, zero_index_in_this_step)
+                    one_index_in_this_batch = np.intersect1d(one_index_in_this_batch, one_index_in_this_step)
                     
                 else:
                     spk, mem = net(data)
@@ -308,6 +314,7 @@ def TBPTT(
                 mem_rec_trunc = []
         
         zero_index_in_this_epoch = np.intersect1d(zero_index_in_this_epoch, zero_index_in_this_batch)
+        one_index_in_this_epoch = np.intersect1d(one_index_in_this_epoch, one_index_in_this_batch)
 
         if (step == num_steps - 1) and (num_steps % K):
             spk_rec_trunc = torch.stack(spk_rec_trunc, dim=0)
@@ -354,7 +361,8 @@ def TBPTT(
                     neurons_dict[neuron].detach_hidden()
 
     dead_neuron_rate = float(len(zero_index_in_this_epoch)/300)
-    return dead_neuron_rate, loss_avg / iter_count  # , spk_rec, mem_rec
+    too_activate_neuron_rate = float(len(one_index_in_this_epoch)/300)
+    return dead_neuron_rate, too_activate_neuron_rate, loss_avg / iter_count  # , spk_rec, mem_rec
 
 
 def BPTT(

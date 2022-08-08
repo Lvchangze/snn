@@ -3,22 +3,21 @@ import pickle
 import torch
 from torch.utils.data import Dataset, DataLoader
 from snntorch import spikegen
-from model import TextCNN
 from tqdm import tqdm
 import re
 import math
-# zero_index_in_this_batch = np.arange(301)
-# print(np.intersect1d(zero_index_in_this_batch, [0,1,3]))
 
-bias = 0.25
+# bias = 0.08
 
-w = torch.empty(1, 100)
-torch.nn.init.kaiming_uniform_(w, a=math.sqrt(5))
-w = w + bias
-c = np.sum(w.cpu().detach().numpy() > 0)
-print(float(c/(1*100)))
-
-# torch.nn.init.xavier_normal_(w)
+# w = torch.empty(300, 2)
+# torch.nn.init.kaiming_uniform_(w, a=math.sqrt(5))
 # w = w + bias
 # c = np.sum(w.cpu().detach().numpy() > 0)
 # print(float(c/(300*2)))
+
+w = torch.rand(25, 100)
+print(w.size())
+rate = spikegen.rate(w, num_steps=30)
+print(rate.size())
+latency = spikegen.latency(w, num_steps=30)
+print(latency.size())

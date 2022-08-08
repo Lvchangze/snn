@@ -7,11 +7,11 @@
         ],
         "==more==": [
             [
-                "--positive_init_rate", ["0.6"],
-                "--num_steps",          ["20", "30"],
+                "--positive_init_rate", ["0.55"],
+                "--num_steps",          ["20", "30", "40", "50"],
                 "--learning_rate",      ["1e-4", "5e-4"],
                 "--beta",               ["1", "0.95"],
-                "--epochs",             ["30"]
+                "--epochs",             ["40"]
             ]
         ]
     }

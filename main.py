@@ -48,7 +48,8 @@ def build_rated_dataset(args: SNNArgs, split='train'):
     rated_data = []
     for i in range(len(dataset)):
         item = dataset[i]
-        tmp = (torch.tensor(spikegen.rate(item[0], num_steps=args.num_steps), dtype=torch.float), item[1])
+        # tmp = (torch.tensor(spikegen.rate(item[0].clone().detach(), num_steps=args.num_steps), dtype=torch.float), item[1])
+        tmp = (torch.tensor(spikegen.latency(item[0], num_steps=args.num_steps).clone().detach(), dtype=torch.float), item[1])
         rated_data.append(tmp)
     rated_dataset = RateDataset(rated_data)
     setattr(args, f'{split}_rated_dataset', rated_dataset)
@@ -103,6 +104,8 @@ def build_surrogate(args: SNNArgs):
 def build_criterion(args: SNNArgs):
     if args.loss == 'cross_entropy':
         args.loss_fn = SF.ce_rate_loss()
+    elif args.loss == 'cross_entropy_temporal':
+        args.loss_fn = SF.ce_temporal_loss()
     return
 
 def build_model(args: SNNArgs):
@@ -174,22 +177,29 @@ def main(args):
     bulid_scheduler(args)
     dead_neuron_rate_list = []
     output_message("Training Begin")
+    too_activate_neuron_rate_list = []
+    acc_list = []
     for epoch in tqdm(range(args.epochs)):
         if args.dead_neuron_checker == "True":
             Monitor._EPOCH = epoch
             Monitor.create_epoch_monitor()
-        dead_neuron_rate, avg_loss = BPTT(args.model, args.train_dataloader, optimizer=args.optimizer, criterion=args.loss_fn, 
+        dead_neuron_rate, too_activate_neuron_rate, avg_loss = BPTT(args.model, args.train_dataloader, optimizer=args.optimizer, criterion=args.loss_fn, 
                         num_steps=False, time_var=True, time_first=False, device=args.device)
         dead_neuron_rate_list.append(dead_neuron_rate)
+        too_activate_neuron_rate_list.append(too_activate_neuron_rate)
         output_message("Dead_neuron_rate in epoch {}: {}.".format(epoch, dead_neuron_rate))
+        output_message("Too_Activate_neuron_rate in epoch {}: {}.".format(epoch, too_activate_neuron_rate))
         output_message("Training epoch {}, avg_loss: {}.".format(epoch, avg_loss))
         # saved_path = FileCreater.build_saving_file(args,description="-epoch{}".format(epoch))
         # save_model_to_file(save_path=saved_path, model=args.model)
         acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps)
         output_message("Test acc in epoch {} is: {}".format(epoch, acc))
+        acc_list.append(acc)
         if args.dead_neuron_checker == "True":
             Monitor.print_results_by_epoch(epoch)
     output_message("Mean Dead_neuron_rate: {}".format(np.mean(dead_neuron_rate_list)))
+    output_message("Mean Too_Activate_neuron_rate: {}".format(np.mean(too_activate_neuron_rate_list)))
+    output_message("Best Acc: {}".format(np.max(acc_list)))
     return
 
 if __name__ == "__main__":
