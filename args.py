@@ -9,7 +9,8 @@ class SNNArgs(argparse.Namespace):
         # if you want to add some new args for logging
         # plz be careful to the changed saving and logging dirs
         # SUGGESTION: write exp with args_for_logging and save them in every manytask json file 
-        self.args_for_logging = ["label_num","positive_init_rate", 'num_steps', 'learning_rate', 'beta']
+
+        self.args_for_logging = ["loss", "label_num", "positive_init_rate", 'num_steps', 'learning_rate', 'beta']
         
         # training details
         self.mode = "train"
@@ -35,8 +36,8 @@ class SNNArgs(argparse.Namespace):
         
         # file saver
         # please modify the renew function together
-        self.data_path = f"data/new_train_u_3v_sst2_glove100d_sent_len{self.sentence_length}.tensor_dataset"
-        self.test_data_path = f"data/new_test_u_3v_sst2_glove100d_sent_len{self.sentence_length}.tensor_dataset"
+        self.data_path = f"data/sst2/new_train_u_3v_sst2_glove100d_sent_len{self.sentence_length}.tensor_dataset"
+        self.test_data_path = f"data/sst2/new_test_u_3v_sst2_glove100d_sent_len{self.sentence_length}.tensor_dataset"
         self.workspace = '/home/lvchangze/snn'
         self.data_dir = os.path.join(self.workspace, "data", self.dataset_name)
         self.logging_dir = os.path.join(self.workspace, 'logs')

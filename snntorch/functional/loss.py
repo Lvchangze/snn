@@ -36,7 +36,9 @@ class LossFunctions:
         device = "cpu"
         if spk_out.is_cuda:
             device = "cuda"
+        # print("spk_out size: ",spk_out.size())
         pop_code = torch.zeros(tuple([spk_out.size(1)] + [num_classes])).to(device)
+        
         for idx in range(num_classes):
             pop_code[:, idx] = (
                 spk_out[
@@ -47,8 +49,9 @@ class LossFunctions:
                     ),
                 ]
                 .sum(-1)
-                .sum(0)
+                .sum(0)   # 对num_step的累加
             )
+        
         return pop_code
 
 
@@ -74,19 +77,39 @@ class ce_rate_loss(LossFunctions):
 
     """
 
-    def __init__(self):
+    def __init__(self, population_code=False, num_classes=False):
+        self.population_code = population_code
+        self.num_classes = num_classes
         self.__name__ = "ce_rate_loss"
 
     def __call__(self, spk_out, targets):
-        device, num_steps, _ = self._prediction_check(spk_out)
         log_softmax_fn = nn.LogSoftmax(dim=-1)
         loss_fn = nn.NLLLoss()
-
-        log_p_y = log_softmax_fn(spk_out)
+        device, num_steps, num_outputs = self._prediction_check(spk_out)
         loss = torch.zeros((1), dtype=dtype, device=device)
+        
+        if self.population_code:
+            for step in range(num_steps):
+                pop_code = torch.zeros(tuple([spk_out.size(1)] + [self.num_classes])).to(device)
+                for idx in range(self.num_classes):
+                    pop_code[:, idx] = (
+                        spk_out[
+                            step,
+                            :,
+                            int(num_outputs * idx / self.num_classes) : int(
+                                num_outputs * (idx + 1) / self.num_classes
+                            ),
+                        ]
+                        .sum(-1)
+                    )
+                log_p_y_this_step = log_softmax_fn(pop_code)
+                loss += loss_fn(log_p_y_this_step, targets)
+                
+        else:
+            log_p_y = log_softmax_fn(spk_out)
 
-        for step in range(num_steps):
-            loss += loss_fn(log_p_y[step], targets)
+            for step in range(num_steps):
+                loss += loss_fn(log_p_y[step], targets)
 
         return loss / num_steps
 
@@ -138,6 +161,7 @@ class ce_count_loss(LossFunctions):
             spike_count = self._population_code(spk_out, self.num_classes, num_outputs)
         else:
             spike_count = torch.sum(spk_out, 0)  # B x C
+
         log_p_y = log_softmax_fn(spike_count)
 
         loss = loss_fn(log_p_y, targets)

@@ -117,8 +117,11 @@ def build_criterion(args: SNNArgs):
     else:
         if args.loss == 'ce_count':
             args.loss_fn = SF.ce_count_loss(population_code=True, num_classes=2)
+        elif args.loss == "ce_rate":
+            args.loss_fn = SF.ce_rate_loss(population_code=True, num_classes=2)
         elif args.loss == "mse_count":
             args.loss_fn = SF.mse_count_loss(correct_rate=1.0, incorrect_rate=0.0, population_code=True, num_classes=2)
+        
     return
 
 def build_model(args: SNNArgs):
