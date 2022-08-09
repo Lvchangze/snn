@@ -103,7 +103,7 @@ def build_surrogate(args: SNNArgs):
     return
 
 def build_criterion(args: SNNArgs):
-    if args.ensemble is False:
+    if args.ensemble == 'False':
         if args.loss == 'ce_rate':
             args.loss_fn = SF.ce_rate_loss()
         elif args.loss == 'ce_temporal':
