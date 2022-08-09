@@ -1,7 +1,7 @@
 {
     "executor": "python main.py",
-    "cuda": [0,1,2,3],
-    "concurrency": 4,
+    "cuda": [0],
+    "concurrency": 1,
     "configs": {
         "==base==": [
         ],

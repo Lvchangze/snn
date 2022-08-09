@@ -9,8 +9,7 @@ class SNNArgs(argparse.Namespace):
         # if you want to add some new args for logging
         # plz be careful to the changed saving and logging dirs
         # SUGGESTION: write exp with args_for_logging and save them in every manytask json file 
-
-        self.args_for_logging = ['num_steps', 'sentence_length', 'epochs', 'learning_rate', 'batch_size', "initial_method", "positive_init_rate"]
+        self.args_for_logging = ["label_num","positive_init_rate", 'num_steps', 'learning_rate', 'beta']
         
         # training details
         self.mode = "train"
@@ -22,10 +21,12 @@ class SNNArgs(argparse.Namespace):
         self.sentence_length = 25
         self.hidden_dim = 100
         self.num_steps = 10
-        self.loss = 'cross_entropy'
-        self.learning_rate = 5e-4
+        self.loss = 'ce_count'
+        self.learning_rate = 1e-4
         self.weight_decay = 0
         self.optimizer_name = "Adamw"
+        self.encode = "rate"  #['rate', 'latency']
+        self.ensemble = "False"
 
         # for codebook
         self.use_codebook = 'False'
@@ -34,10 +35,8 @@ class SNNArgs(argparse.Namespace):
         
         # file saver
         # please modify the renew function together
-        self.data_path = f"data/sst2/new_train_u_3v_sst2_glove100d_sent_len{self.sentence_length}.tensor_dataset"
-        self.test_data_path = f"data/sst2/new_test_u_3v_sst2_glove100d_sent_len{self.sentence_length}.tensor_dataset"
-        # self.data_path = "data/just_for_test_train_u_3v_sst2_glove100d.tensor_dataset"
-        # self.test_data_path = "data/just_for_test_test_u_3v_sst2_glove100d.tensor_dataset"
+        self.data_path = f"data/new_train_u_3v_sst2_glove100d_sent_len{self.sentence_length}.tensor_dataset"
+        self.test_data_path = f"data/new_test_u_3v_sst2_glove100d_sent_len{self.sentence_length}.tensor_dataset"
         self.workspace = '/home/lvchangze/snn'
         self.data_dir = os.path.join(self.workspace, "data", self.dataset_name)
         self.logging_dir = os.path.join(self.workspace, 'logs')
@@ -50,7 +49,7 @@ class SNNArgs(argparse.Namespace):
         self.filters = [3,4,5]
         self.filter_num = 100
         self.initial_method = 'zero' # ['zero', 'normal', 'kaiming', 'xavier', 'k+n', 'k+x']
-        self.positive_init_rate = 0.6
+        self.positive_init_rate = 0.55
 
         # monitor
         self.dead_neuron_checker = "False"

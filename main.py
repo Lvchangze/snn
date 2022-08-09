@@ -1,4 +1,3 @@
-# from ctypes.wintypes import tagRECT
 import os
 import torch
 from torch.utils.data import DataLoader
@@ -48,8 +47,10 @@ def build_rated_dataset(args: SNNArgs, split='train'):
     rated_data = []
     for i in range(len(dataset)):
         item = dataset[i]
-        # tmp = (torch.tensor(spikegen.rate(item[0].clone().detach(), num_steps=args.num_steps), dtype=torch.float), item[1])
-        tmp = (torch.tensor(spikegen.latency(item[0], num_steps=args.num_steps).clone().detach(), dtype=torch.float), item[1])
+        if args.encode == "rate":
+            tmp = (spikegen.rate(item[0], num_steps=args.num_steps).clone().detach().float(), item[1])
+        elif args.encode == "latency":
+            tmp = (spikegen.latency(item[0], num_steps=args.num_steps).clone().detach().float(), item[1])
         rated_data.append(tmp)
     rated_dataset = RateDataset(rated_data)
     setattr(args, f'{split}_rated_dataset', rated_dataset)
@@ -102,10 +103,22 @@ def build_surrogate(args: SNNArgs):
     return
 
 def build_criterion(args: SNNArgs):
-    if args.loss == 'cross_entropy':
-        args.loss_fn = SF.ce_rate_loss()
-    elif args.loss == 'cross_entropy_temporal':
-        args.loss_fn = SF.ce_temporal_loss()
+    if args.ensemble is False:
+        if args.loss == 'ce_rate':
+            args.loss_fn = SF.ce_rate_loss()
+        elif args.loss == 'ce_temporal':
+            args.loss_fn = SF.ce_temporal_loss()
+        elif args.loss == 'ce_count':
+            args.loss_fn = SF.ce_count_loss()
+        elif args.loss == 'mse_count':
+            args.loss_fn = SF.mse_count_loss()
+        elif args.loss == 'mse_temporal':
+            args.loss_fn = SF.mse_temporal_loss()
+    else:
+        if args.loss == 'ce_count':
+            args.loss_fn = SF.ce_count_loss(population_code=True, num_classes=2)
+        elif args.loss == "mse_count":
+            args.loss_fn = SF.mse_count_loss(correct_rate=1.0, incorrect_rate=0.0, population_code=True, num_classes=2)
     return
 
 def build_model(args: SNNArgs):
@@ -127,7 +140,7 @@ def bulid_scheduler(args: SNNArgs):
     args.scheduler = StepLR(args.optimizer, step_size = 2 , gamma = 0.1)
     return
 
-def predict_accuracy(args, dataloader, model, num_steps):
+def predict_accuracy(args, dataloader, model, num_steps, population_code=False, num_classes=False):
     def forward_pass(net, num_steps, data):
         mem_rec = []
         spk_rec = []
@@ -150,7 +163,11 @@ def predict_accuracy(args, dataloader, model, num_steps):
             data = data.to(args.device)
             targets = targets.to(args.device)
             spk_rec, _ = forward_pass(model, num_steps, data)
-            acc += SF.accuracy_rate(spk_rec, targets) * spk_rec.size(1)
+
+            if population_code:
+                acc += SF.accuracy_rate(spk_rec, targets, population_code=True, num_classes=num_classes) * spk_rec.size(1)
+            else:
+                acc += SF.accuracy_rate(spk_rec, targets) * spk_rec.size(1)
             total += spk_rec.size(1)
 
     return acc/total
@@ -192,7 +209,7 @@ def main(args):
         output_message("Training epoch {}, avg_loss: {}.".format(epoch, avg_loss))
         # saved_path = FileCreater.build_saving_file(args,description="-epoch{}".format(epoch))
         # save_model_to_file(save_path=saved_path, model=args.model)
-        acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps)
+        acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=2)
         output_message("Test acc in epoch {} is: {}".format(epoch, acc))
         acc_list.append(acc)
         if args.dead_neuron_checker == "True":
