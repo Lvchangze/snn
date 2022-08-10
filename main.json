@@ -1,7 +1,7 @@
 {
     "executor": "python main.py",
-    "cuda": [0,1,2,3],
-    "concurrency": 4,
+    "cuda": [2,3],
+    "concurrency": 2,
     "configs": {
         "==base==": [
         ],
@@ -11,7 +11,7 @@
                 "--ensemble",           ["True"],
                 "--label_num",          ["100", "200","300", "400", "500"],
                 "--positive_init_rate", ["0.55"],
-                "--num_steps",          ["20"],
+                "--num_steps",          ["50"],
                 "--learning_rate",      ["1e-4"],
                 "--beta",               ["0.95"],
                 "--epochs",             ["40"]
