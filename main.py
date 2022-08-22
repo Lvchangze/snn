@@ -21,7 +21,8 @@ from utils.monitor import Monitor
 
 def build_environment(args: SNNArgs):
     args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    set_seed(args.seed)
+    if args.use_seed == "True":
+        set_seed(args.seed)
     return
 
 def build_dataset(args: SNNArgs, split='train'):
@@ -210,8 +211,8 @@ def main(args):
         output_message("Dead_neuron_rate in epoch {}: {}.".format(epoch, dead_neuron_rate))
         output_message("Too_Activate_neuron_rate in epoch {}: {}.".format(epoch, too_activate_neuron_rate))
         output_message("Training epoch {}, avg_loss: {}.".format(epoch, avg_loss))
-        # saved_path = FileCreater.build_saving_file(args,description="-epoch{}".format(epoch))
-        # save_model_to_file(save_path=saved_path, model=args.model)
+        saved_path = FileCreater.build_saving_file(args,description="-epoch{}".format(epoch))
+        save_model_to_file(save_path=saved_path, model=args.model)
         acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=2)
         output_message("Test acc in epoch {} is: {}".format(epoch, acc))
         acc_list.append(acc)

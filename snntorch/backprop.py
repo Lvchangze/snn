@@ -197,14 +197,14 @@ def TBPTT(
                 num_steps = data.size(0)
             else:
                 num_steps = data.size(1)
-
+            # print("num_steps: ", num_steps)
             if K is False:
                 K_flag = K
             if K_flag is False:
                 K = num_steps
         
         utils.reset(net)
-        
+        # print(data.transpose(1, 0).size())  # time_step * batch * sent_len * embedding_dim
         zero_index_in_this_batch = np.arange(301)
         one_index_in_this_batch = np.arange(301)
         for step in range(num_steps):

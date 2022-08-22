@@ -84,7 +84,7 @@ class TensorEncoder():
         
         dataset = TensorDataset(embedding_tuple_list)
 
-        file_name = f"../data/new_{self.data_type}_u_{self.bias}v_{self.dataset_name}_glove{self.embedding_dim}d_sent_len{self.sent_length}.tensor_dataset"
+        file_name = f"../data/sst2/new_{self.data_type}_u_{self.bias}v_{self.dataset_name}_glove{self.embedding_dim}d_sent_len{self.sent_length}.tensor_dataset"
         if not os.path.exists(file_name):
             with open(file_name, 'wb') as f:
                 pickle.dump(dataset, f, -1)
@@ -95,10 +95,10 @@ class TensorEncoder():
 if __name__ == "__main__":
     tensor_encoder = TensorEncoder(
         vocab_path="../data/glove.6B.100d.txt",
-        data_type="train",
-        datafile_path="../data/sst2/train.txt", 
+        data_type="test",
+        datafile_path="../data/sst2/test.txt", 
         dataset_name="sst2",
-        sent_length=25,
+        sent_length=20,
         embedding_dim=100,
         bias = 3
     )

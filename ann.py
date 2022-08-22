@@ -43,7 +43,13 @@ parser.add_argument(
     default=100,
     type=int
 )
+parser.add_argument(
+    "--epochs",
+    default=30,
+    type=int
+)
 args = parser.parse_args()
+
 glove_dict = {}
 with open(f"data/glove.6B.{args.embedding_dim}d.txt", "r") as f:
     for line in f:
@@ -78,8 +84,8 @@ class TextCNN(nn.Module):
             nn.Conv2d(in_channels=1, out_channels=args.embedding_dim, kernel_size=(filter_size, args.embedding_dim)) for filter_size in [3,4,5]
         ])
         self.leaky = nn.LeakyReLU()
-        self.maxpool_1 = nn.ModuleList([
-            nn.MaxPool2d((args.sent_length - filter_size + 1, 1)) for filter_size in [3,4,5]
+        self.avgpool_1 = nn.ModuleList([
+            nn.AvgPool2d((args.sent_length - filter_size + 1, 1)) for filter_size in [3,4,5]
         ])
         self.drop = nn.Dropout(p=args.dropout_p)
         self.fc = nn.Linear(len([3,4,5]) * args.embedding_dim, 2)
@@ -90,7 +96,7 @@ class TextCNN(nn.Module):
         x = x.unsqueeze(dim=1)
         conv_out = [conv(x) for conv in self.convs_1]
         leaky_out = [self.leaky(conv) for conv in conv_out]
-        pooled_out = [self.maxpool_1[i](leaky_out[i]) for i in range(len(self.maxpool_1))]
+        pooled_out = [self.avgpool_1[i](leaky_out[i]) for i in range(len(self.avgpool_1))]
         pooled_out = [self.drop(pool) for pool in pooled_out]
         flatten = torch.cat(pooled_out, dim=1).view(batch_size, -1)
         fc_output = self.fc(flatten)
@@ -141,7 +147,7 @@ if __name__ == "__main__":
     all = len(test_data)
     test_dataloader = DataLoader(test_data, batch_size=args.batch_size, shuffle=True)
     acc_list = []
-    for epoch in tqdm(range(20)):
+    for epoch in tqdm(range(args.epochs)):
         for data, target in train_dataloader:
             net.train()
             data = data.to(device)
@@ -161,4 +167,5 @@ if __name__ == "__main__":
                 output = net(data)
                 correct += int(y_batch.eq(torch.max(output,1)[1]).sum())
         acc_list.append(float(correct/all))
+        print(f"Epoch {epoch} Acc: {float(correct/all)}")
     print(np.max(acc_list))

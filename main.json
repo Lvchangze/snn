@@ -1,11 +1,20 @@
 {
     "executor": "python main.py",
-    "cuda": [2,3],
-    "concurrency": 2,
+    "cuda": [0,1,2,3],
+    "concurrency": 4,
     "configs": {
         "==base==": [
+            "--dataset_name",           ["mr"],
+            "--use_seed",               ["False"] 
         ],
         "==more==": [
+            [
+                "--positive_init_rate", ["0.55"],
+                "--num_steps",          ["50"],
+                "--learning_rate",      ["1e-4"],
+                "--beta",               ["0.95"],
+                "--epochs",             ["100"]
+            ],
             [
                 "--loss",               ["ce_rate"], 
                 "--ensemble",           ["True"],
@@ -14,7 +23,7 @@
                 "--num_steps",          ["50"],
                 "--learning_rate",      ["1e-4"],
                 "--beta",               ["0.95"],
-                "--epochs",             ["40"]
+                "--epochs",             ["100"]
             ]
         ]
     }

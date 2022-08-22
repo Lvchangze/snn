@@ -10,18 +10,20 @@ class SNNArgs(argparse.Namespace):
         # plz be careful to the changed saving and logging dirs
         # SUGGESTION: write exp with args_for_logging and save them in every manytask json file 
 
-        self.args_for_logging = ["epochs", "loss", "label_num", "positive_init_rate", 'num_steps', 'learning_rate', 'beta']
+        self.args_for_logging = ["dataset_name", "label_num", "positive_init_rate", 'num_steps', 'learning_rate']
         
         # training details
         self.mode = "train"
         self.dataset_name = 'sst2'
         self.label_num = 2
         self.seed = 42
+        self.use_seed = "True"
         self.epochs = 20
         self.batch_size = 32
         self.sentence_length = 25
         self.hidden_dim = 100
-        self.num_steps = 10
+        self.num_steps = 50
+        self.hidden_layer_num = 200  # hidden_layer_neuron_number
         self.loss = 'ce_rate'
         self.learning_rate = 1e-4
         self.weight_decay = 0
@@ -36,8 +38,8 @@ class SNNArgs(argparse.Namespace):
         
         # file saver
         # please modify the renew function together
-        self.data_path = f"data/sst2/new_train_u_3v_sst2_glove100d_sent_len{self.sentence_length}.tensor_dataset"
-        self.test_data_path = f"data/sst2/new_test_u_3v_sst2_glove100d_sent_len{self.sentence_length}.tensor_dataset"
+        self.data_path = f"data/{self.dataset_name}/train_u_3v_{self.dataset_name}_glove100d_sent_len{self.sentence_length}.tensor_dataset"
+        self.test_data_path = f"data/{self.dataset_name}/test_u_3v_{self.dataset_name}_glove100d_sent_len{self.sentence_length}.tensor_dataset"
         self.workspace = '/home/lvchangze/snn'
         self.data_dir = os.path.join(self.workspace, "data", self.dataset_name)
         self.logging_dir = os.path.join(self.workspace, 'logs')
@@ -59,6 +61,8 @@ class SNNArgs(argparse.Namespace):
         self.data_dir = os.path.join(self.workspace, "data", self.dataset_name)
         self.logging_dir = os.path.join(self.workspace, 'logs')
         self.saving_dir = os.path.join(self.workspace, "saved_models")
+        self.data_path = f"data/{self.dataset_name}/train_u_3v_{self.dataset_name}_glove100d_sent_len{self.sentence_length}.tensor_dataset"
+        self.test_data_path = f"data/{self.dataset_name}/test_u_3v_{self.dataset_name}_glove100d_sent_len{self.sentence_length}.tensor_dataset"
 
     @staticmethod
     def parse(verbose=False):
