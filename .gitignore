@@ -11,3 +11,5 @@ logs
 saved_models
 *.logs
 *.json
+logs_attack
+checkpoints

@@ -13,7 +13,7 @@ class SNNArgs(argparse.Namespace):
         self.args_for_logging = ["dataset_name", "label_num", "positive_init_rate", 'num_steps', 'learning_rate']
         
         # training details
-        self.mode = "train"
+        self.mode = "attack"  # ['train', 'attack']
         self.dataset_name = 'sst2'
         self.label_num = 2
         self.seed = 42
@@ -30,6 +30,11 @@ class SNNArgs(argparse.Namespace):
         self.optimizer_name = "Adamw"
         self.encode = "rate"  #['rate', 'latency']
         self.ensemble = "False"
+        self.max_len = 25
+        self.attack_method = 'textfooler' # ['textfooler', 'bae']
+        self.attack_model_path = 'saved_models/test.pth'
+        self.attack_times = 5
+        self.attack_numbers = 1000
 
         # for codebook
         self.use_codebook = 'False'
@@ -40,10 +45,12 @@ class SNNArgs(argparse.Namespace):
         # please modify the renew function together
         self.data_path = f"data/{self.dataset_name}/train_u_3v_{self.dataset_name}_glove100d_sent_len{self.sentence_length}.tensor_dataset"
         self.test_data_path = f"data/{self.dataset_name}/test_u_3v_{self.dataset_name}_glove100d_sent_len{self.sentence_length}.tensor_dataset"
-        self.workspace = '/home/lvchangze/snn'
+        self.workspace = '/home/xujh/snn'
         self.data_dir = os.path.join(self.workspace, "data", self.dataset_name)
         self.logging_dir = os.path.join(self.workspace, 'logs')
         self.saving_dir = os.path.join(self.workspace, "saved_models")
+        self.vocab_path = os.path.join(self.workspace, "data/glove.6B.100d.txt")
+        self.attack_logging_dir = os.path.join(self.workspace, 'logs_attack')
 
         # network details
         self.surrogate = 'fast_sigmoid'

@@ -76,7 +76,7 @@ class GreenEncoder():
         self.codebook = torch_codebook
         return
 
-    def spike_gen(self, input):
+    def spike_gen(self, input, num_step):
         repeat_num = self.num_steps // self.bit
         if self.num_steps % self.bit:
             raise Warning("The num steps and bit is not suitable.")

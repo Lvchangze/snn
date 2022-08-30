@@ -28,7 +28,7 @@ class FileCreater():
             args.logging_dir = temp_path
         elif style == 'saving':
             args.saving_dir = temp_path
-        pass
+        return temp_path
 
     @staticmethod
     def build_logging(args):

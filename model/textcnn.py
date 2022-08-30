@@ -24,8 +24,8 @@ class TextCNN(nn.Module):
             nn.MaxPool2d((args.sentence_length - filter_size + 1, 1)) for filter_size in [3,4,5]
         ])
         self.lif1 = snn.Leaky(beta=args.beta, spike_grad=spike_grad, init_hidden=True, threshold=1.0)
-        self.fc_1 = nn.Linear(len(args.filters)*args.filter_num, args.hidden_layer_num)
-        self.fc_2 = nn.Linear(args.hidden_layer_num, args.label_num)
+        self.fc_1 = nn.Linear(len(args.filters)*args.filter_num, args.label_num)
+        # self.fc_2 = nn.Linear(args.hidden_layer_num, args.label_num)
         self.lif2 = snn.Leaky(beta=args.beta, spike_grad=spike_grad, init_hidden=True, threshold=1.0, output=True)
     
     def initial(self):
@@ -43,8 +43,8 @@ class TextCNN(nn.Module):
         spks = [self.lif1(pooled) for pooled in pooled_out]
         spks_1 = torch.cat(spks, dim=1).view(batch_size, -1)
         hidden_1 = self.fc_1(spks_1)
-        cur2 = self.fc_2(hidden_1)
-        spk2, mem2 = self.lif2(cur2)
+        # cur2 = self.fc_2(hidden_1)
+        spk2, mem2 = self.lif2(hidden_1)
         if self.dead_neuron_checker == "True":
             temp_spks = spks_1.sum(dim=0)
             Monitor.add_monitor(temp_spks, 0)

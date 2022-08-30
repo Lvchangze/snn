@@ -1,4 +1,5 @@
 import os
+from random import choices
 import torch
 from torch.utils.data import DataLoader
 from torch.optim import AdamW, SGD
@@ -6,7 +7,8 @@ from torch.optim.lr_scheduler import LambdaLR, StepLR
 from tqdm import tqdm
 from dataset import RateDataset
 from data_preprocess.green_encoder import GreenEncoder
-from utils.public import set_seed, save_model_to_file, output_message
+from data_preprocess.embedding_encoder import EmbeddingEncoder
+from utils.public import set_seed, save_model_to_file, output_message, load_model_from_file
 from args import SNNArgs
 import pickle
 from snntorch.utils import reset
@@ -18,6 +20,13 @@ from model import TextCNN
 import numpy as np
 from utils.filecreater import FileCreater
 from utils.monitor import Monitor
+from textattack import Attacker
+from utils.attackutils import CustomTextAttackDataset, build_attacker
+from textattack.models.wrappers.snn_model_wrapper import SNNModelWrapper
+from textattack.loggers import AttackLogManager, attack_log_manager
+from utils.metrics import SimplifidResult
+import textattack
+import time
 
 def build_environment(args: SNNArgs):
     args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -71,7 +80,7 @@ def build_codebooked_dataset(args: SNNArgs, split='train'):
     encoder.write_codebook()
     for i in range(len(dataset)):
         item = dataset[i]
-        tmp = (encoder.spike_gen(item[0]).clone().detach(), item[1])
+        tmp = (encoder.spike_gen(item[0], num_step=args.num_steps).clone().detach(), item[1])
         codebooked_data.append(tmp)
     codebooked_dataset = RateDataset(codebooked_data)
     setattr(args, f'{split}_codebooked_dataset', codebooked_dataset)
@@ -177,7 +186,7 @@ def predict_accuracy(args, dataloader, model, num_steps, population_code=False, 
     return acc/total
 
 
-def main(args):
+def train(args):
     build_dataset(args=args)
     build_dataset(args=args, split='test')
     if args.use_codebook == 'False':
@@ -223,6 +232,54 @@ def main(args):
     output_message("Best Acc: {}".format(np.max(acc_list)))
     return
 
+def attack(args: SNNArgs):
+    build_surrogate(args=args)
+    build_model(args)
+    args.tokenizer = EmbeddingEncoder(args.vocab_path, args.data_dir, args.max_len)
+    model_wrapper = SNNModelWrapper(args, args.model, args.tokenizer)
+    attack = build_attacker(args, model_wrapper)
+    test_instances = EmbeddingEncoder.dataset_encode('data/sst2/test.txt')
+    load_model_from_file(args.attack_model_path, args.model)
+    attack_log_dir = FileCreater.build_directory(args, args.attack_logging_dir, 'attacking', args.args_for_logging)
+    attack_log_path = os.path.join(attack_log_dir, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    attack_log_manager = AttackLogManager()
+    attack_log_manager.add_output_file(attack_log_path, "ansi")
+    test_instances = [x for x in test_instances if len(x[0].split(' ')) > 4]
+    for i in range(args.attack_times):
+        print("Attack time {}".format(i))
+        # total_len = len(test_instances)
+        # attack_num = min(total_len, args.attack_numbers)
+        # choices_arr = np.arange(total_len)
+        # np.random.shuffle(choices_arr)
+        # choice_instances = []
+        # for item in choices_arr[:attack_num]:
+        #     choice_instances.append(test_instances[item])
+        # dataset = CustomTextAttackDataset.from_instances(args.dataset_name, choice_instances)
+        dataset = textattack.datasets.HuggingFaceDataset("sst2", split="validation", shuffle=True)
+        attack_num = min(args.attack_numbers, len(dataset))
+        # attack_args = textattack.AttackArgs(num_examples=attack_num,log_to_csv=attack_log_dir+"/{}_log.csv".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())),
+        #     checkpoint_interval=100,checkpoint_dir="checkpoints",disable_stdout=True)
+        attack_args = textattack.AttackArgs(num_examples=attack_num,log_to_csv=attack_log_dir+"/{}_log.csv".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())),
+            disable_stdout=True)
+        attacker = Attacker(attack, dataset, attack_args)
+        results_iterable = attacker.attack_dataset()
+        description = tqdm(results_iterable, total=attack_num)
+        result_statistics = SimplifidResult()
+        for result in description:
+            # try:
+            attack_log_manager.log_result(result)
+            result_statistics(result)
+            description.set_description(result_statistics.__str__())
+            # except Exception as e:
+            #     print(e)
+            #     print('error in process')
+            #     continue
+    attack_log_manager.enable_stdout()
+    attack_log_manager.log_summary()
+
+
+    pass
+
 if __name__ == "__main__":
     args = SNNArgs.parse()
     build_environment(args)
@@ -230,4 +287,7 @@ if __name__ == "__main__":
     FileCreater.build_directory(args, args.saving_dir, 'saving', args.args_for_logging)
     FileCreater.build_logging(args)
     output_message("Program args: {}".format(args))
-    main(args)
+    if args.mode == 'train':
+        train(args)
+    else:
+        attack(args)

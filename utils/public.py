@@ -1,3 +1,4 @@
+from email.policy import strict
 import os
 import torch
 import numpy as np
@@ -18,6 +19,12 @@ def save_model_to_file(save_path, model):
     torch.save(model.state_dict(), save_path)
     logging.info('Saved model to {}'.format(save_path))
     logging.info("The number of trainable parameters: {}".format(sum(p.numel() for p in model.parameters())))
+
+def load_model_from_file(save_path, model):
+    if save_path[-4:] != '.pth':
+        save_path = '{}.pth'.format(save_path)
+    model.load_state_dict(torch.load(save_path), strict=False)
+    return
 
 def set_seed(seed=42):
     if seed is not None:
