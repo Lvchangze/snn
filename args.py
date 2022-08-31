@@ -10,15 +10,16 @@ class SNNArgs(argparse.Namespace):
         # plz be careful to the changed saving and logging dirs
         # SUGGESTION: write exp with args_for_logging and save them in every manytask json file 
 
-        self.args_for_logging = ["dataset_name", "label_num", "positive_init_rate", 'num_steps', 'learning_rate']
+        # self.args_for_logging = ["dataset_name", "label_num", "positive_init_rate", 'num_steps', 'learning_rate']
+        self.args_for_logging = ["mode", "dataset_name", "attack_method","attack_times","attack_numbers"]
         
         # training details
-        self.mode = "attack"  # ['train', 'attack']
+        self.mode = "attack"  # ['train', 'attack', 'ann']
         self.dataset_name = 'sst2'
         self.label_num = 2
         self.seed = 42
         self.use_seed = "True"
-        self.epochs = 20
+        self.epochs = 50
         self.batch_size = 32
         self.sentence_length = 25
         self.hidden_dim = 100
@@ -27,6 +28,7 @@ class SNNArgs(argparse.Namespace):
         self.loss = 'ce_rate'
         self.learning_rate = 1e-4
         self.weight_decay = 0
+        self.dropout_p = 0.5
         self.optimizer_name = "Adamw"
         self.encode = "rate"  #['rate', 'latency']
         self.ensemble = "False"
@@ -45,7 +47,7 @@ class SNNArgs(argparse.Namespace):
         # please modify the renew function together
         self.data_path = f"data/{self.dataset_name}/train_u_3v_{self.dataset_name}_glove100d_sent_len{self.sentence_length}.tensor_dataset"
         self.test_data_path = f"data/{self.dataset_name}/test_u_3v_{self.dataset_name}_glove100d_sent_len{self.sentence_length}.tensor_dataset"
-        self.workspace = '/home/xujh/snn'
+        self.workspace = '/home/lvchangze/snn'
         self.data_dir = os.path.join(self.workspace, "data", self.dataset_name)
         self.logging_dir = os.path.join(self.workspace, 'logs')
         self.saving_dir = os.path.join(self.workspace, "saved_models")

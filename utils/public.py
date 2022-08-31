@@ -4,6 +4,7 @@ import torch
 import numpy as np
 import random
 import logging
+import re
 
 def check_and_create_path(path: str):
     if not os.path.exists(path):
@@ -38,3 +39,20 @@ def set_seed(seed=42):
         # some cudnn methods can be random even after fixing the seed
         # unless you tell it to be deterministic
         torch.backends.cudnn.deterministic = True
+
+def clean_tokenize(data, lower=False):
+    ''' used to clean token, split all token with space and lower all tokens
+    this function usually use in some language models which don't require strict pre-tokenization
+    such as LSTM(with glove vector) or ELMO(already has tokenizer)
+    :param data: string
+    :return: list, contain all cleaned tokens from original input
+    '''
+
+    # recover some abbreviations
+    data = re.sub(r"\-", " ", data)
+    data = re.sub(r"\/", " ", data)
+    data = re.sub(r"\s{2,}", " ", data)
+    data = data.lower() if lower else data
+
+    # split all tokens, form a list
+    return [x.strip() for x in data.split() if x.strip()]

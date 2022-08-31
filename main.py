@@ -4,11 +4,12 @@ import torch
 from torch.utils.data import DataLoader
 from torch.optim import AdamW, SGD
 from torch.optim.lr_scheduler import LambdaLR, StepLR
+import torch.nn.functional as F
 from tqdm import tqdm
 from dataset import RateDataset
 from data_preprocess.green_encoder import GreenEncoder
 from data_preprocess.embedding_encoder import EmbeddingEncoder
-from utils.public import set_seed, save_model_to_file, output_message, load_model_from_file
+from utils.public import set_seed, save_model_to_file, output_message, load_model_from_file, clean_tokenize
 from args import SNNArgs
 import pickle
 from snntorch.utils import reset
@@ -16,7 +17,7 @@ from snntorch.backprop import BPTT
 import snntorch.functional as SF
 from snntorch import spikegen
 import snntorch.surrogate as surrogate
-from model import TextCNN
+from model import TextCNN, ANN_TextCNN
 import numpy as np
 from utils.filecreater import FileCreater
 from utils.monitor import Monitor
@@ -27,6 +28,7 @@ from textattack.loggers import AttackLogManager, attack_log_manager
 from utils.metrics import SimplifidResult
 import textattack
 import time
+from dataset import TensorDataset
 
 def build_environment(args: SNNArgs):
     args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -113,31 +115,37 @@ def build_surrogate(args: SNNArgs):
     return
 
 def build_criterion(args: SNNArgs):
-    if args.ensemble == 'False':
-        if args.loss == 'ce_rate':
-            args.loss_fn = SF.ce_rate_loss()
-        elif args.loss == 'ce_temporal':
-            args.loss_fn = SF.ce_temporal_loss()
-        elif args.loss == 'ce_count':
-            args.loss_fn = SF.ce_count_loss()
-        elif args.loss == 'mse_count':
-            args.loss_fn = SF.mse_count_loss()
-        elif args.loss == 'mse_temporal':
-            args.loss_fn = SF.mse_temporal_loss()
+    if args.mode == "ann":
+        args.loss_fn = F.cross_entropy
     else:
-        if args.loss == 'ce_count':
-            args.loss_fn = SF.ce_count_loss(population_code=True, num_classes=2)
-        elif args.loss == "ce_rate":
-            args.loss_fn = SF.ce_rate_loss(population_code=True, num_classes=2)
-        elif args.loss == "mse_count":
-            args.loss_fn = SF.mse_count_loss(correct_rate=1.0, incorrect_rate=0.0, population_code=True, num_classes=2)
+        if args.ensemble == 'False':
+            if args.loss == 'ce_rate':
+                args.loss_fn = SF.ce_rate_loss()
+            elif args.loss == 'ce_temporal':
+                args.loss_fn = SF.ce_temporal_loss()
+            elif args.loss == 'ce_count':
+                args.loss_fn = SF.ce_count_loss()
+            elif args.loss == 'mse_count':
+                args.loss_fn = SF.mse_count_loss()
+            elif args.loss == 'mse_temporal':
+                args.loss_fn = SF.mse_temporal_loss()
+        else:
+            if args.loss == 'ce_count':
+                args.loss_fn = SF.ce_count_loss(population_code=True, num_classes=2)
+            elif args.loss == "ce_rate":
+                args.loss_fn = SF.ce_rate_loss(population_code=True, num_classes=2)
+            elif args.loss == "mse_count":
+                args.loss_fn = SF.mse_count_loss(correct_rate=1.0, incorrect_rate=0.0, population_code=True, num_classes=2)
         
     return
 
 def build_model(args: SNNArgs):
     output_message("Build model...")
-    args.model = TextCNN(args, spike_grad=args.spike_grad).to(args.device)
-    args.model.initial()
+    if args.mode == "ann":
+        args.model = ANN_TextCNN(args).to(args.device)
+    else:
+        args.model = TextCNN(args, spike_grad=args.spike_grad).to(args.device)
+        args.model.initial()
     return
 
 def build_optimizer(args: SNNArgs):
@@ -276,8 +284,74 @@ def attack(args: SNNArgs):
             #     continue
     attack_log_manager.enable_stdout()
     attack_log_manager.log_summary()
+    pass
+    
+def ann(args):
+    glove_dict = {}
+    with open(args.vocab_path, "r") as f:
+        for line in f:
+            values = line.split()
+            word = values[0]
+            vector = np.asarray(values[1:], "float32")
+            glove_dict[word] = vector
+    zero_embedding = np.array([0] * args.hidden_dim, dtype=float)
 
+    def get_tensor_dataset(file):
+        sample_list = []
+        with open(file, "r") as f:
+            for line in f.readlines():
+                temp = line.split('\t')
+                sentence = temp[0].strip()
+                label = int(temp[1])
+                sample_list.append((sentence, label))
 
+        embedding_tuple_list = []
+        for i in range(len(sample_list)):
+            sent_embedding = np.array([[0] * args.hidden_dim] * args.sentence_length, dtype=float)
+            # text_list = sample_list[i][0].split()
+            text_list = clean_tokenize(sample_list[i][0])
+            label = sample_list[i][1]
+            for j in range(args.sentence_length):
+                if j >= len(text_list):
+                    embedding = zero_embedding # zero padding
+                else:
+                    word = text_list[j]
+                    embedding = glove_dict[word] if word in glove_dict.keys() else zero_embedding
+                sent_embedding[j] = embedding
+            embedding_tuple_list.append((torch.tensor(sent_embedding), label))
+        dataset = TensorDataset(embedding_tuple_list)
+        return dataset
+    
+    build_model(args)
+    build_optimizer(args)
+    build_criterion(args)
+    build_dataloader(args=args, dataset=get_tensor_dataset("data/sst2/train.txt"))
+    test_dataset = get_tensor_dataset("data/sst2/test.txt")
+    build_dataloader(args=args, dataset=test_dataset, split='test')
+    acc_list = []
+    zero_embedding = np.array([0] * args.hidden_dim, dtype=float)
+
+    for epoch in tqdm(range(args.epochs)):
+        for data, target in args.train_dataloader:
+            args.model.train()
+            data = data.to(args.device)
+            target = target.to(args.device)
+            output = args.model(data)
+            loss = args.loss_fn(output, target)
+            args.optimizer.zero_grad()
+            loss.backward()
+            args.optimizer.step()
+        args.model.eval()
+        with torch.no_grad():
+            correct = 0
+            for data, y_batch in args.test_dataloader:
+                data = data.to(args.device)
+                y_batch = y_batch.to(args.device)
+                output = args.model(data)
+                correct += int(y_batch.eq(torch.max(output,1)[1]).sum())
+        acc_list.append(float(correct/len(test_dataset)))
+        output_message(f"Epoch {epoch} Acc: {float(correct/len(test_dataset))}")
+    output_message(np.max(acc_list))
     pass
 
 if __name__ == "__main__":
@@ -289,5 +363,7 @@ if __name__ == "__main__":
     output_message("Program args: {}".format(args))
     if args.mode == 'train':
         train(args)
-    else:
+    elif args.mode == 'attack':
         attack(args)
+    elif args.mode == 'ann':
+        ann(args)
