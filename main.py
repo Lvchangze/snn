@@ -341,6 +341,8 @@ def ann(args):
             args.optimizer.zero_grad()
             loss.backward()
             args.optimizer.step()
+        saved_path = FileCreater.build_saving_file(args, description="-epoch{}".format(epoch))
+        save_model_to_file(save_path=saved_path, model=args.model)
         args.model.eval()
         with torch.no_grad():
             correct = 0

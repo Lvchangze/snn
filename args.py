@@ -10,8 +10,9 @@ class SNNArgs(argparse.Namespace):
         # plz be careful to the changed saving and logging dirs
         # SUGGESTION: write exp with args_for_logging and save them in every manytask json file 
 
-        # self.args_for_logging = ["dataset_name", "label_num", "positive_init_rate", 'num_steps', 'learning_rate']
-        self.args_for_logging = ["mode", "dataset_name", "attack_method","attack_times","attack_numbers"]
+        # self.args_for_logging = ["mode","dataset_name", "label_num", "positive_init_rate", 'num_steps', 'learning_rate']
+        # self.args_for_logging = ["mode", "dataset_name", "attack_method","attack_times","attack_numbers"]
+        self.args_for_logging = ["mode","dataset_name", "sentence_length", "dropout_p", "weight_decay", "batch_size", "learning_rate"]
         
         # training details
         self.mode = "attack"  # ['train', 'attack', 'ann']
@@ -67,6 +68,12 @@ class SNNArgs(argparse.Namespace):
         self.dead_neuron_checker = "False"
 
     def renew_args(self):
+        if self.mode == "ann":
+            self.args_for_logging = ["mode","dataset_name", "sentence_length", "dropout_p", "weight_decay", "batch_size", "learning_rate"]
+        elif self.mode == "attack":
+            self.args_for_logging = ["mode", "dataset_name", "attack_method","attack_times","attack_numbers"]
+        else:
+            self.args_for_logging = ["mode","dataset_name", "label_num", "positive_init_rate", 'num_steps', 'learning_rate']
         self.data_dir = os.path.join(self.workspace, "data", self.dataset_name)
         self.logging_dir = os.path.join(self.workspace, 'logs')
         self.saving_dir = os.path.join(self.workspace, "saved_models")

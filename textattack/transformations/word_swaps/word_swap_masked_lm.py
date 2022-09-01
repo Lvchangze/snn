@@ -222,32 +222,33 @@ class WordSwapMaskedLM(WordSwap):
                     replacement_words.append(token)
             return replacement_words
         else:
-            # Word to replace is tokenized as multiple sub-words
-            top_preds = [id_preds[i] for i in target_ids_pos]
-            products = itertools.product(*top_preds)
-            combination_results = []
-            # Original BERT-Attack implement uses cross-entropy loss
-            cross_entropy_loss = torch.nn.CrossEntropyLoss(reduction="none")
-            target_ids_pos_tensor = torch.tensor(target_ids_pos)
-            word_tensor = torch.zeros(len(target_ids_pos), dtype=torch.long)
-            for bpe_tokens in products:
-                for i in range(len(bpe_tokens)):
-                    word_tensor[i] = bpe_tokens[i]
+            # # Word to replace is tokenized as multiple sub-words
+            # top_preds = [id_preds[i] for i in target_ids_pos]
+            # products = itertools.product(*top_preds)
+            # combination_results = []
+            # # Original BERT-Attack implement uses cross-entropy loss
+            # cross_entropy_loss = torch.nn.CrossEntropyLoss(reduction="none")
+            # target_ids_pos_tensor = torch.tensor(target_ids_pos)
+            # word_tensor = torch.zeros(len(target_ids_pos), dtype=torch.long)
+            # for bpe_tokens in products:
+            #     for i in range(len(bpe_tokens)):
+            #         word_tensor[i] = bpe_tokens[i]
 
-                logits = torch.index_select(masked_lm_logits, 0, target_ids_pos_tensor)
-                loss = cross_entropy_loss(logits, word_tensor)
-                perplexity = torch.exp(torch.mean(loss, dim=0)).item()
-                word = "".join(
-                    self._lm_tokenizer.convert_ids_to_tokens(word_tensor)
-                ).replace("##", "")
-                if utils.is_one_word(word):
-                    combination_results.append((word, perplexity))
-            # Sort to get top-K results
-            sorted(combination_results, key=lambda x: x[1])
-            top_replacements = [
-                x[0] for x in combination_results[: self.max_candidates]
-            ]
-            return top_replacements
+            #     logits = torch.index_select(masked_lm_logits, 0, target_ids_pos_tensor)
+            #     loss = cross_entropy_loss(logits, word_tensor)
+            #     perplexity = torch.exp(torch.mean(loss, dim=0)).item()
+            #     word = "".join(
+            #         self._lm_tokenizer.convert_ids_to_tokens(word_tensor)
+            #     ).replace("##", "")
+            #     if utils.is_one_word(word):
+            #         combination_results.append((word, perplexity))
+            # # Sort to get top-K results
+            # sorted(combination_results, key=lambda x: x[1])
+            # top_replacements = [
+            #     x[0] for x in combination_results[: self.max_candidates]
+            # ]
+            # return top_replacements
+            return []
 
     def _get_transformations(self, current_text, indices_to_modify):
         indices_to_modify = list(indices_to_modify)
