@@ -21,7 +21,7 @@ class TextCNN(nn.Module):
         #     nn.AvgPool2d((args.sentence_length - filter_size + 1, 1)) for filter_size in args.filters
         # ])
         self.maxpool_1 = nn.ModuleList([
-            nn.MaxPool2d((args.sentence_length - filter_size + 1, 1)) for filter_size in [3,4,5]
+            nn.MaxPool2d((args.sentence_length - filter_size + 1, 1)) for filter_size in args.filters
         ])
         self.lif1 = snn.Leaky(beta=args.beta, spike_grad=spike_grad, init_hidden=True, threshold=1.0)
         self.fc_1 = nn.Linear(len(args.filters)*args.filter_num, args.label_num)

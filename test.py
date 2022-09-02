@@ -6,7 +6,7 @@ from snntorch import spikegen
 from tqdm import tqdm
 import re
 import math
-
+from datasets import load_dataset
 # bias = 0.08
 
 # w = torch.empty(300, 2)
@@ -26,3 +26,5 @@ import math
 # latency = spikegen.latency(w, num_steps=30)
 # print(latency.size())
 
+dataset = load_dataset("sst2", split="train")
+print(len(dataset))

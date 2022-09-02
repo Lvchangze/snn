@@ -14,7 +14,7 @@ class ANN_TextCNN(nn.Module):
         # ])
 
         self.maxpool_1 = nn.ModuleList([
-            nn.MaxPool2d((args.sentence_length - filter_size + 1, 1)) for filter_size in [3,4,5]
+            nn.MaxPool2d((args.sentence_length - filter_size + 1, 1)) for filter_size in args.filters
         ])
         self.drop = nn.Dropout(p=args.dropout_p)
         self.fc_1 = nn.Linear(len(args.filters)*args.filter_num, args.label_num)
