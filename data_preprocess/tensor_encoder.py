@@ -7,6 +7,28 @@ import torch
 from tqdm import tqdm
 import os
 from dataset import TensorDataset
+from datasets import load_dataset
+
+
+def get_samples(datafile_path):
+    sample_list = []
+    with open(datafile_path, "r") as f:
+        for line in f.readlines():
+            temp = line.split('\t')
+            sentence = temp[0].strip()
+            label = int(temp[1])
+            sample_list.append((sentence, label))
+    return sample_list
+
+
+def get_samples(dataset_name, data_type):
+    sample_list = []
+    dataset = load_dataset(dataset_name, split=data_type)
+    for sample in dataset:
+        sentence = sample['sentence'].strip()
+        label = int(sample['label'])
+        sample_list.append((sentence, label))
+    return sample_list
 
 
 def clean_tokenize(data, lower=False):
@@ -46,13 +68,8 @@ class TensorEncoder():
         left_boundary = mean_value - self.bias * np.sqrt(variance_value)
         right_boundary = mean_value + self.bias * np.sqrt(variance_value)
 
-        sample_list = []
-        with open(self.datafile_path, "r") as f:
-            for line in f.readlines():
-                temp = line.split('\t')
-                sentence = temp[0].strip()
-                label = int(temp[1])
-                sample_list.append((sentence, label))
+        # sample_list = get_samples(self.datafile_path)
+        sample_list = get_samples(self.dataset_name, self.data_type)
 
         embedding_tuple_list = []
         for i in tqdm(range(len(sample_list))):
@@ -95,10 +112,11 @@ class TensorEncoder():
 if __name__ == "__main__":
     tensor_encoder = TensorEncoder(
         vocab_path="../data/glove.6B.100d.txt",
-        data_type="test",
-        datafile_path="../data/sst2/test.txt", 
         dataset_name="sst2",
-        sent_length=20,
+        data_type="train",
+        # datafile_path="../data/sst2/test.txt",
+        datafile_path="",
+        sent_length=25,
         embedding_dim=100,
         bias = 3
     )
