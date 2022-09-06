@@ -24,6 +24,7 @@ from utils.monitor import Monitor
 from textattack import Attacker
 from utils.attackutils import CustomTextAttackDataset, build_attacker
 from textattack.models.wrappers.snn_model_wrapper import SNNModelWrapper
+from textattack.models.wrappers.ann_model_wrapper import ANNModelWrapper
 from textattack.loggers import AttackLogManager, attack_log_manager
 from utils.metrics import SimplifidResult
 import textattack
@@ -141,7 +142,7 @@ def build_criterion(args: SNNArgs):
 
 def build_model(args: SNNArgs):
     output_message("Build model...")
-    if args.mode == "ann":
+    if args.mode == "ann" or args.model_mode == "ann":
         args.model = ANN_TextCNN(args).to(args.device)
     else:
         args.model = TextCNN(args, spike_grad=args.spike_grad).to(args.device)
@@ -241,10 +242,15 @@ def train(args):
     return
 
 def attack(args: SNNArgs):
-    build_surrogate(args=args)
-    build_model(args)
-    args.tokenizer = EmbeddingEncoder(args.vocab_path, args.data_dir, args.max_len)
-    model_wrapper = SNNModelWrapper(args, args.model, args.tokenizer)
+    if args.model_mode == 'snn':
+        build_surrogate(args=args)
+        build_model(args)
+        args.tokenizer = EmbeddingEncoder(args.vocab_path, args.data_dir, args.max_len)
+        model_wrapper = SNNModelWrapper(args, args.model, args.tokenizer)
+    elif args.model_mode == 'ann':
+        build_model(args)
+        args.tokenizer = EmbeddingEncoder(args.vocab_path, args.data_dir, args.max_len)
+        model_wrapper = ANNModelWrapper(args, args.model, args.tokenizer)
     attack = build_attacker(args, model_wrapper)
     test_instances = EmbeddingEncoder.dataset_encode('data/sst2/test.txt')
     load_model_from_file(args.attack_model_path, args.model)

@@ -16,11 +16,12 @@ class SNNArgs(argparse.Namespace):
         
         # training details
         self.mode = "attack"  # ['train', 'attack', 'ann']
+        self.model_mode = "ann" # ['snn', 'ann']
         self.dataset_name = 'sst2'
         self.label_num = 2
         self.seed = 42
         self.use_seed = "True"
-        self.epochs = 50
+        self.epochs = 10
         self.batch_size = 32
         self.sentence_length = 25
         self.hidden_dim = 100
@@ -35,7 +36,7 @@ class SNNArgs(argparse.Namespace):
         self.ensemble = "False"
         self.max_len = 25
         self.attack_method = 'textfooler' # ['textfooler', 'bae']
-        self.attack_model_path = 'saved_models/test.pth'
+        self.attack_model_path = 'saved_models/conversion.pth'
         self.attack_times = 5
         self.attack_numbers = 1000
 
@@ -48,7 +49,7 @@ class SNNArgs(argparse.Namespace):
         # please modify the renew function together
         self.data_path = f"data/{self.dataset_name}/train_u_3v_{self.dataset_name}_glove100d_sent_len{self.sentence_length}.tensor_dataset"
         self.test_data_path = f"data/{self.dataset_name}/test_u_3v_{self.dataset_name}_glove100d_sent_len{self.sentence_length}.tensor_dataset"
-        self.workspace = '/home/lvchangze/snn'
+        self.workspace = '/home/xujh/snn'
         self.data_dir = os.path.join(self.workspace, "data", self.dataset_name)
         self.logging_dir = os.path.join(self.workspace, 'logs')
         self.saving_dir = os.path.join(self.workspace, "saved_models")
