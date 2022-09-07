@@ -117,7 +117,7 @@ def build_surrogate(args: SNNArgs):
     return
 
 def build_criterion(args: SNNArgs):
-    if args.mode == "ann":
+    if args.model_mode == "ann":
         args.loss_fn = F.cross_entropy
     else:
         if args.ensemble == 'False':
@@ -143,9 +143,9 @@ def build_criterion(args: SNNArgs):
 
 def build_model(args: SNNArgs):
     output_message("Build model...")
-    if args.mode == "ann" or args.model_mode == "ann":
+    if args.model_mode == "ann":
         args.model = ANN_TextCNN(args).to(args.device)
-    elif args.mode == "attack" or args.mode == "train":
+    elif args.model_mode == "snn":
         args.model = TextCNN(args, spike_grad=args.spike_grad).to(args.device)
         args.model.initial()
     elif args.mode == "conversion":
@@ -375,11 +375,11 @@ if __name__ == "__main__":
     FileCreater.build_directory(args, args.saving_dir, 'saving', args.args_for_logging)
     FileCreater.build_logging(args)
     output_message("Program args: {}".format(args))
-    if args.mode == 'train' and args.model_type == "snn":
+    if args.mode == 'train' and args.model_mode == "snn":
         train(args)
     elif args.mode == 'attack':
         attack(args)
-    elif args.mode == 'train' and args.model_type == "ann":
+    elif args.mode == 'train' and args.model_mode == "ann":
         ann_train(args)
     elif args.mode == "conversion":
         train(args)
