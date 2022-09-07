@@ -2,6 +2,7 @@ import numpy as np
 import pickle
 import torch
 from torch.utils.data import Dataset, DataLoader
+from model.textcnn import TextCNN
 from snntorch import spikegen
 from tqdm import tqdm
 import re
@@ -26,5 +27,7 @@ from datasets import load_dataset
 # latency = spikegen.latency(w, num_steps=30)
 # print(latency.size())
 
-dataset = load_dataset("sst2", split="train")
-print(len(dataset))
+# dataset = load_dataset("sst2", split="test")
+# print(dataset[0])
+model  = TextCNN()
+model = model.load_state_dict(torch.load("saved_models/conversion.pth"))

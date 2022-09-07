@@ -1,3 +1,4 @@
+from email.policy import strict
 import os
 from random import choices
 import torch
@@ -144,9 +145,13 @@ def build_model(args: SNNArgs):
     output_message("Build model...")
     if args.mode == "ann" or args.model_mode == "ann":
         args.model = ANN_TextCNN(args).to(args.device)
-    else:
+    elif args.mode == "attack" or args.mode == "train":
         args.model = TextCNN(args, spike_grad=args.spike_grad).to(args.device)
         args.model.initial()
+    elif args.mode == "conversion":
+        args.model = TextCNN(args, spike_grad=args.spike_grad).to(args.device)
+        args.model.initial()
+        args.model.load_state_dict(torch.load(args.conversion_model_path), strict=False)
     return
 
 def build_optimizer(args: SNNArgs):
@@ -155,11 +160,6 @@ def build_optimizer(args: SNNArgs):
         args.optimizer = AdamW(args.model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay, betas=(0.9, 0.999))
     elif args.optimizer_name == "SGD":
         args.optimizer = SGD(args.model.parameters(), lr=args.learning_rate, momentum=0.9, weight_decay=args.weight_decay)
-    return
-
-def bulid_scheduler(args: SNNArgs):
-    output_message("Build scheduler...")
-    args.scheduler = StepLR(args.optimizer, step_size = 2 , gamma = 0.1)
     return
 
 def predict_accuracy(args, dataloader, model, num_steps, population_code=False, num_classes=False):
@@ -194,7 +194,6 @@ def predict_accuracy(args, dataloader, model, num_steps, population_code=False, 
 
     return acc/total
 
-
 def train(args):
     build_dataset(args=args)
     build_dataset(args=args, split='test')
@@ -208,12 +207,15 @@ def train(args):
         build_dataloader(args=args, dataset=args.train_codebooked_dataset)
         build_codebooked_dataset(args, split='test')
         build_dataloader(args=args, dataset=args.test_codebooked_dataset, split='test')    
-
     build_surrogate(args=args)
     build_model(args)
+
+    if args.mode == "conversion":
+        acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=2)
+        output_message("Test acc of initial conversion TextCNN is: {}".format(acc))
+
     build_optimizer(args)
     build_criterion(args)
-    bulid_scheduler(args)
     dead_neuron_rate_list = []
     output_message("Training Begin")
     too_activate_neuron_rate_list = []
@@ -292,7 +294,7 @@ def attack(args: SNNArgs):
     attack_log_manager.log_summary()
     pass
     
-def ann(args):
+def ann_train(args):
     glove_dict = {}
     with open(args.vocab_path, "r") as f:
         for line in f:
@@ -328,15 +330,19 @@ def ann(args):
         dataset = TensorDataset(embedding_tuple_list)
         return dataset
     
+    build_dataset(args=args)
+    build_dataset(args=args, split='test')
+    build_dataloader(args=args, dataset=args.train_dataset)
+    build_dataloader(args=args, dataset=args.test_dataset, split='test')
     build_model(args)
     build_optimizer(args)
     build_criterion(args)
-    build_dataloader(args=args, dataset=get_tensor_dataset("data/sst2/train.txt"))
-    test_dataset = get_tensor_dataset("data/sst2/test.txt")
-    build_dataloader(args=args, dataset=test_dataset, split='test')
-    acc_list = []
-    zero_embedding = np.array([0] * args.hidden_dim, dtype=float)
 
+    # build_dataloader(args=args, dataset=get_tensor_dataset("data/sst2/train.txt"))
+    # test_dataset = get_tensor_dataset("data/sst2/test.txt")
+    # build_dataloader(args=args, dataset=test_dataset, split='test')
+
+    acc_list = []
     for epoch in tqdm(range(args.epochs)):
         for data, target in args.train_dataloader:
             args.model.train()
@@ -357,8 +363,8 @@ def ann(args):
                 y_batch = y_batch.to(args.device)
                 output = args.model(data)
                 correct += int(y_batch.eq(torch.max(output,1)[1]).sum())
-        acc_list.append(float(correct/len(test_dataset)))
-        output_message(f"Epoch {epoch} Acc: {float(correct/len(test_dataset))}")
+        acc_list.append(float(correct/len(args.test_dataset)))
+        output_message(f"Epoch {epoch} Acc: {float(correct/len(args.test_dataset))}")
     output_message(np.max(acc_list))
     pass
 
@@ -369,9 +375,11 @@ if __name__ == "__main__":
     FileCreater.build_directory(args, args.saving_dir, 'saving', args.args_for_logging)
     FileCreater.build_logging(args)
     output_message("Program args: {}".format(args))
-    if args.mode == 'train':
+    if args.mode == 'train' and args.model_type == "snn":
         train(args)
     elif args.mode == 'attack':
         attack(args)
-    elif args.mode == 'ann':
-        ann(args)
+    elif args.mode == 'train' and args.model_type == "ann":
+        ann_train(args)
+    elif args.mode == "conversion":
+        train(args)

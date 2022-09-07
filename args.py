@@ -15,13 +15,13 @@ class SNNArgs(argparse.Namespace):
         self.args_for_logging = ["mode","dataset_name", "sentence_length", "dropout_p", "weight_decay", "batch_size", "learning_rate"]
         
         # training details
-        self.mode = "attack"  # ['train', 'attack', 'ann']
+        self.mode = "attack"  # ['train', 'attack', 'conversion']
         self.model_mode = "ann" # ['snn', 'ann']
         self.dataset_name = 'sst2'
         self.label_num = 2
         self.seed = 42
-        self.use_seed = "True"
-        self.epochs = 10
+        self.use_seed = "False"
+        self.epochs = 50
         self.batch_size = 32
         self.sentence_length = 25
         self.hidden_dim = 100
@@ -29,14 +29,14 @@ class SNNArgs(argparse.Namespace):
         self.hidden_layer_num = 200  # hidden_layer_neuron_number
         self.loss = 'ce_rate'
         self.learning_rate = 1e-4
-        self.weight_decay = 0
+        self.weight_decay = 0.0
         self.dropout_p = 0.5
         self.optimizer_name = "Adamw"
         self.encode = "rate"  #['rate', 'latency']
         self.ensemble = "False"
         self.max_len = 25
         self.attack_method = 'textfooler' # ['textfooler', 'bae']
-        self.attack_model_path = 'saved_models/conversion.pth'
+        self.attack_model_path = 'saved_models/test.pth'
         self.attack_times = 5
         self.attack_numbers = 1000
 
@@ -49,7 +49,7 @@ class SNNArgs(argparse.Namespace):
         # please modify the renew function together
         self.data_path = f"data/{self.dataset_name}/train_u_3v_{self.dataset_name}_glove100d_sent_len{self.sentence_length}.tensor_dataset"
         self.test_data_path = f"data/{self.dataset_name}/test_u_3v_{self.dataset_name}_glove100d_sent_len{self.sentence_length}.tensor_dataset"
-        self.workspace = '/home/xujh/snn'
+        self.workspace = '/home/lvchangze/snn'
         self.data_dir = os.path.join(self.workspace, "data", self.dataset_name)
         self.logging_dir = os.path.join(self.workspace, 'logs')
         self.saving_dir = os.path.join(self.workspace, "saved_models")
@@ -58,7 +58,7 @@ class SNNArgs(argparse.Namespace):
 
         # network details
         self.surrogate = 'fast_sigmoid'
-        self.beta = 0.95
+        self.beta = 1
         self.model_type = 'textcnn'
         self.filters = [3,4,5]
         self.filter_num = 100
@@ -67,6 +67,9 @@ class SNNArgs(argparse.Namespace):
 
         # monitor
         self.dead_neuron_checker = "False"
+
+        # conversion
+        self.conversion_model_path = "saved_models/conversion.pth"
 
     def renew_args(self):
         if self.mode == "ann":

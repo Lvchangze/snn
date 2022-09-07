@@ -4,8 +4,8 @@
     "concurrency": 4,
     "configs": {
         "==base==": [
-            "--dataset_name",           ["mr"],
-            "--use_seed",               ["False"] 
+            "--dataset_name",           ["sst2"],
+            "--use_seed",               ["False"]
         ],
         "==more==": [
             [
