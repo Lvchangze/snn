@@ -39,6 +39,7 @@ class TextCNN(nn.Module):
         # ])
 
         self.drop = nn.Dropout(p=args.dropout_p)
+        
         self.lif1 = snn.Leaky(beta=args.beta, spike_grad=spike_grad, init_hidden=True, threshold=1.0)
         self.fc_1 = nn.Linear(len(args.filters)*args.filter_num, args.label_num)
         # self.fc_2 = nn.Linear(args.hidden_layer_num, args.label_num)
@@ -55,7 +56,7 @@ class TextCNN(nn.Module):
         x = x.unsqueeze(dim=1)
         conv_out = [conv(x) for conv in self.convs_1]
 
-        # conv_out = [self.relu(c) for c in conv_out]
+        conv_out = [self.relu_1(c) for c in conv_out]
         # conv_out = [self.middle_lifs[i](conv_out[i]) for i in range(len(self.middle_lifs))]
 
         pooled_out = [self.avgpool_1[i](conv_out[i]) for i in range(len(self.avgpool_1))]
