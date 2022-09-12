@@ -150,8 +150,8 @@ def build_model(args: SNNArgs):
         args.model.initial()
     elif args.mode == "conversion":
         args.model = TextCNN(args, spike_grad=args.spike_grad).to(args.device)
-        args.model.initial()
         args.model.load_state_dict(torch.load(args.conversion_model_path), strict=False)
+        args.model.initial()
     return
 
 def build_optimizer(args: SNNArgs):
@@ -247,20 +247,20 @@ def attack(args: SNNArgs):
     if args.model_mode == 'snn':
         build_surrogate(args=args)
         build_model(args)
-        args.tokenizer = EmbeddingEncoder(args.vocab_path, args.data_dir, args.max_len)
+        args.tokenizer = EmbeddingEncoder(args.vocab_path, args.data_dir, args.max_len, model_mode="snn")
         model_wrapper = SNNModelWrapper(args, args.model, args.tokenizer)
     elif args.model_mode == 'ann':
         build_model(args)
-        args.tokenizer = EmbeddingEncoder(args.vocab_path, args.data_dir, args.max_len)
+        args.tokenizer = EmbeddingEncoder(args.vocab_path, args.data_dir, args.max_len, model_mode="ann")
         model_wrapper = ANNModelWrapper(args, args.model, args.tokenizer)
     attack = build_attacker(args, model_wrapper)
-    test_instances = EmbeddingEncoder.dataset_encode('data/sst2/test.txt')
+    # test_instances = EmbeddingEncoder.dataset_encode('data/sst2/test.txt')
     load_model_from_file(args.attack_model_path, args.model)
     attack_log_dir = FileCreater.build_directory(args, args.attack_logging_dir, 'attacking', args.args_for_logging)
     attack_log_path = os.path.join(attack_log_dir, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
     attack_log_manager = AttackLogManager()
     attack_log_manager.add_output_file(attack_log_path, "ansi")
-    test_instances = [x for x in test_instances if len(x[0].split(' ')) > 4]
+    # test_instances = [x for x in test_instances if len(x[0].split(' ')) > 4]
     for i in range(args.attack_times):
         print("Attack time {}".format(i))
         # total_len = len(test_instances)
@@ -295,16 +295,16 @@ def attack(args: SNNArgs):
     pass
     
 def ann_train(args):
-    glove_dict = {}
-    with open(args.vocab_path, "r") as f:
-        for line in f:
-            values = line.split()
-            word = values[0]
-            vector = np.asarray(values[1:], "float32")
-            glove_dict[word] = vector
-    zero_embedding = np.array([0] * args.hidden_dim, dtype=float)
-
     def get_tensor_dataset(file):
+        glove_dict = {}
+        with open(args.vocab_path, "r") as f:
+            for line in f:
+                values = line.split()
+                word = values[0]
+                vector = np.asarray(values[1:], "float32")
+                glove_dict[word] = vector
+        zero_embedding = np.array([0] * args.hidden_dim, dtype=float)
+
         sample_list = []
         with open(file, "r") as f:
             for line in f.readlines():
@@ -330,17 +330,18 @@ def ann_train(args):
         dataset = TensorDataset(embedding_tuple_list)
         return dataset
     
-    build_dataset(args=args)
-    build_dataset(args=args, split='test')
-    build_dataloader(args=args, dataset=args.train_dataset)
-    build_dataloader(args=args, dataset=args.test_dataset, split='test')
+    # build_dataset(args=args)
+    # build_dataset(args=args, split='test')
+    # build_dataloader(args=args, dataset=args.train_dataset)
+    # build_dataloader(args=args, dataset=args.test_dataset, split='test')
+
     build_model(args)
     build_optimizer(args)
     build_criterion(args)
 
-    # build_dataloader(args=args, dataset=get_tensor_dataset("data/sst2/train.txt"))
-    # test_dataset = get_tensor_dataset("data/sst2/test.txt")
-    # build_dataloader(args=args, dataset=test_dataset, split='test')
+    build_dataloader(args=args, dataset=get_tensor_dataset("data/sst2/train.txt"))
+    test_dataset = get_tensor_dataset("data/sst2/dev.txt")
+    build_dataloader(args=args, dataset=test_dataset, split='test')
 
     acc_list = []
     for epoch in tqdm(range(args.epochs)):
@@ -363,8 +364,8 @@ def ann_train(args):
                 y_batch = y_batch.to(args.device)
                 output = args.model(data)
                 correct += int(y_batch.eq(torch.max(output,1)[1]).sum())
-        acc_list.append(float(correct/len(args.test_dataset)))
-        output_message(f"Epoch {epoch} Acc: {float(correct/len(args.test_dataset))}")
+        acc_list.append(float(correct/len(test_dataset)))
+        output_message(f"Epoch {epoch} Acc: {float(correct/len(test_dataset))}")
     output_message(np.max(acc_list))
     pass
 

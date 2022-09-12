@@ -29,5 +29,7 @@ from datasets import load_dataset
 
 # dataset = load_dataset("sst2", split="test")
 # print(dataset[0])
-model  = TextCNN()
-model = model.load_state_dict(torch.load("saved_models/conversion.pth"))
+
+# model  = TextCNN()
+# model = model.load_state_dict(torch.load("saved_models/conversion.pth"))
+# print(torch.load("saved_models/83.37%_ann_attack_test.pth").keys())

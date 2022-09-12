@@ -11,8 +11,8 @@ class SNNArgs(argparse.Namespace):
         # SUGGESTION: write exp with args_for_logging and save them in every manytask json file 
 
         # training details
-        self.mode = "attack"  # ['train', 'attack', 'conversion']
-        self.model_mode = "ann" # ['snn', 'ann']
+        self.mode = "train"  # ['train', 'attack', 'conversion']
+        self.model_mode = "snn" # ['snn', 'ann']
         
         self.dataset_name = 'sst2'
         self.label_num = 2
@@ -55,7 +55,7 @@ class SNNArgs(argparse.Namespace):
 
         # network details
         self.surrogate = 'fast_sigmoid'
-        self.beta = 1
+        self.beta = 1.0
         self.model_type = 'textcnn'
         self.filters = [3,4,5]
         self.filter_num = 100
@@ -70,11 +70,11 @@ class SNNArgs(argparse.Namespace):
 
     def renew_args(self):
         if self.model_mode == "ann" and self.mode == "train":
-            self.args_for_logging = ["model_type", "mode","dataset_name", "sentence_length", "dropout_p", "weight_decay", "batch_size", "learning_rate"]
+            self.args_for_logging = ["model_mode", "mode","dataset_name", "sentence_length", "dropout_p", "weight_decay", "batch_size", "learning_rate"]
         elif self.mode == "attack":
-            self.args_for_logging = ["model_type", "mode", "dataset_name", "attack_method","attack_times","attack_numbers"]
+            self.args_for_logging = ["model_mode", "mode", "dataset_name", "attack_method","attack_times","attack_numbers"]
         else:
-            self.args_for_logging = ["model_type", "mode","dataset_name", "label_num", "positive_init_rate", 'num_steps', 'learning_rate']
+            self.args_for_logging = ["model_mode", "mode","dataset_name", "label_num", "positive_init_rate", 'num_steps', 'learning_rate']
         self.data_dir = os.path.join(self.workspace, "data", self.dataset_name)
         self.logging_dir = os.path.join(self.workspace, 'logs')
         self.saving_dir = os.path.join(self.workspace, "saved_models")

@@ -3,12 +3,13 @@ import re
 import torch
 
 class EmbeddingEncoder():
-    def __init__(self, vocab_path, data_path, max_len=30, bias=3) -> None:
+    def __init__(self, vocab_path, data_path, max_len=25, bias=3, model_mode="snn") -> None:
         self.vocab_path = vocab_path
         self.bias = bias
         self.data_path = data_path
         self.max_len = max_len
         self.glove_dict = {}
+        self.model_mode = model_mode
         self.get_embedding()
         pass
 
@@ -26,12 +27,13 @@ class EmbeddingEncoder():
         # print(glove_dict['recent'])
         mean_value = np.mean(list(glove_dict.values()))
         vairance_value = np.var(list(glove_dict.values()))
-        left = mean_value - vairance_value * self.bias
-        right = mean_value + vairance_value * self.bias
-        for key in glove_dict.keys():
-            temp_clip = np.clip(glove_dict[key], left, right)
-            temp = (temp_clip - mean_value) / (self.bias * vairance_value)
-            glove_dict[key] = (temp + 1) / 2
+        left = mean_value - np.sqrt(vairance_value) * self.bias
+        right = mean_value + np.sqrt(vairance_value) * self.bias
+        if self.model_mode == "snn":
+            for key in glove_dict.keys():
+                temp_clip = np.clip(glove_dict[key], left, right)
+                temp = (temp_clip - mean_value) / (self.bias * np.sqrt(vairance_value))
+                glove_dict[key] = (temp + 1) / 2
         self.glove_dict = glove_dict
         self.glove_dict['<pad>'] = [0] * self.hidden_dim
         self.glove_dict['<unk>'] = [0] * self.hidden_dim

@@ -10,7 +10,7 @@ from dataset import TensorDataset
 from datasets import load_dataset
 
 
-def get_samples(datafile_path):
+def get_samples_from_text(datafile_path):
     sample_list = []
     with open(datafile_path, "r") as f:
         for line in f.readlines():
@@ -21,7 +21,7 @@ def get_samples(datafile_path):
     return sample_list
 
 
-def get_samples(dataset_name, data_type):
+def get_samples_from_web(dataset_name, data_type):
     sample_list = []
     dataset = load_dataset(dataset_name, split=data_type)
     for sample in dataset:
@@ -68,8 +68,8 @@ class TensorEncoder():
         left_boundary = mean_value - self.bias * np.sqrt(variance_value)
         right_boundary = mean_value + self.bias * np.sqrt(variance_value)
 
-        # sample_list = get_samples(self.datafile_path)
-        sample_list = get_samples(self.dataset_name, self.data_type)
+        sample_list = get_samples_from_text(datafile_path=self.datafile_path)
+        # sample_list = get_samples_from_web(self.dataset_name, self.data_type)
 
         embedding_tuple_list = []
         for i in tqdm(range(len(sample_list))):
@@ -113,9 +113,8 @@ if __name__ == "__main__":
     tensor_encoder = TensorEncoder(
         vocab_path="../data/glove.6B.100d.txt",
         dataset_name="sst2",
-        data_type="train",
-        # datafile_path="../data/sst2/test.txt",
-        datafile_path="",
+        data_type="test",
+        datafile_path="../data/sst2/test.txt",
         sent_length=25,
         embedding_dim=100,
         bias = 3
