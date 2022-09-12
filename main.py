@@ -26,6 +26,7 @@ from textattack import Attacker
 from utils.attackutils import CustomTextAttackDataset, build_attacker
 from textattack.models.wrappers.snn_model_wrapper import SNNModelWrapper
 from textattack.models.wrappers.ann_model_wrapper import ANNModelWrapper
+from textattack.models.wrappers.snn_population_model_wrapper import SNNPopulationModelWrapper
 from textattack.loggers import AttackLogManager, attack_log_manager
 from utils.metrics import SimplifidResult
 import textattack
@@ -248,7 +249,10 @@ def attack(args: SNNArgs):
         build_surrogate(args=args)
         build_model(args)
         args.tokenizer = EmbeddingEncoder(args.vocab_path, args.data_dir, args.max_len, model_mode="snn")
-        model_wrapper = SNNModelWrapper(args, args.model, args.tokenizer)
+        if args.ensemble == 'True':
+            model_wrapper = SNNPopulationModelWrapper(args, args.model, args.tokenizer)
+        else:
+            model_wrapper = SNNModelWrapper(args, args.model, args.tokenizer)
     elif args.model_mode == 'ann':
         build_model(args)
         args.tokenizer = EmbeddingEncoder(args.vocab_path, args.data_dir, args.max_len, model_mode="ann")

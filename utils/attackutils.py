@@ -102,6 +102,40 @@ def batch_snn_model_predict(model_predict, inputs, num_step=32, spike_gen=spikeg
     
     return np.concatenate(outputs, axis=0)
 
+def batch_snn_ensemble_model_predict(model_predict, inputs, label_num, num_step=32, spike_gen=spikegen.rate):
+    utils.reset(net=model_predict)
+    num_return = utils._final_layer_check(model_predict)
+    outputs = []
+    
+    spk_rec_trunc = []
+    batch = spike_gen(inputs, num_steps=num_step)
+
+    ### need to debug the num_step
+    ### batch = batch.transpose(0, 1)
+    num_step = batch.shape[0]
+    for step in range(num_step):
+        if num_return == 2:
+            _, spk, mem = model_predict(batch[step])
+        elif num_return == 3:
+            spk, _, mem = model_predict(batch[step])
+        elif num_return == 4:
+            spk, _, _, mem = model_predict(batch[step])
+        temp = []
+        for i in range(spk.shape[-1] // label_num * 2):
+            temp.append(torch.mean(spk[:, i*label_num//2:(i+1)*label_num//2], dim=-1))
+        spk = torch.stack(temp).transpose(1,0)
+        spk_rec_trunc.append(spk)
+
+
+    spk_rec_trunc = torch.stack(spk_rec_trunc, dim=0)
+    logits = torch.mean(spk_rec_trunc, dim=0)
+    preds = logits.cpu()
+    if not isinstance(preds, np.ndarray):
+        preds = np.array(preds)
+    outputs.append(preds)
+    
+    return np.concatenate(outputs, axis=0)
+
 class CustomTextAttackDataset(HuggingFaceDataset):
     """Loads a dataset from HuggingFace ``datasets`` and prepares it as a
     TextAttack dataset.

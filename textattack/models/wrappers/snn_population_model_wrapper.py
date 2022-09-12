@@ -7,14 +7,16 @@ PyTorch SNN Model Wrapper
 import torch
 from torch.nn import CrossEntropyLoss
 from args import SNNArgs
+from data_preprocess.green_encoder import GreenEncoder
 
 import utils.attackutils
+from snntorch import spikegen
 from .model_wrapper import ModelWrapper
 
 torch.cuda.empty_cache()
 
 
-class ANNModelWrapper(ModelWrapper):
+class SNNPopulationModelWrapper(ModelWrapper):
     """Loads a PyTorch model (`nn.Module`) and tokenizer.
 
     Args:
@@ -33,10 +35,17 @@ class ANNModelWrapper(ModelWrapper):
         self.tokenizer = tokenizer
         self.num_steps = args.num_steps
         self.use_codebook = args.use_codebook
+        self.label_num = args.label_num
+        if self.use_codebook == 'True':
+            self.encoder = GreenEncoder(self.args)
+            self.encoder.write_codebook()
+            self.spike_gen = self.encoder.spike_gen
+        else:
+            self.spike_gen = spikegen.rate
 
 
     def to(self, device):
-        self.model.to(device)      
+        self.model.to(device)
 
     def __call__(self, text_input_list):
         model_device = next(self.model.parameters()).device
@@ -44,8 +53,8 @@ class ANNModelWrapper(ModelWrapper):
         ids = ids.clone().detach().to(model_device)
 
         with torch.no_grad():
-            outputs = utils.attackutils.batch_model_predict(
-                self.model, ids
+            outputs = utils.attackutils.batch_snn_ensemble_model_predict(
+                self.model, ids, label_num=self.label_num, num_step=self.num_steps, spike_gen=self.spike_gen
             )
 
         return outputs

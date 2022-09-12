@@ -9,7 +9,6 @@ from torch.nn import CrossEntropyLoss
 from args import SNNArgs
 from data_preprocess.green_encoder import GreenEncoder
 
-import textattack
 import utils.attackutils
 from snntorch import spikegen
 from .model_wrapper import ModelWrapper
