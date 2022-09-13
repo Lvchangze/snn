@@ -32,4 +32,22 @@ from datasets import load_dataset
 
 # model  = TextCNN()
 # model = model.load_state_dict(torch.load("saved_models/conversion.pth"))
-# print(torch.load("saved_models/83.37%_ann_attack_test.pth").keys())
+# path = "/home/lvchangze/snn/saved_models/model_modeann-modetrain-dataset_namesst2-sentence_length25-dropout_p0.5-weight_decay0.001-batch_size32-learning_rate0.0005/2022-09-13 16:25:08.log--epoch29.pth"
+# print(torch.load(path))
+
+# with open("data/sst2/test_u_3v_sst2_glove100d_sent_len25.tensor_dataset", 'rb') as f:
+#     dataset = pickle.load(f)
+#     print(dataset[1])
+
+
+def clean_tokenize(data, lower=False):
+    # recover some abbreviations
+    data = re.sub(r"\-", " ", data)
+    data = re.sub(r"\/", " ", data)
+    data = re.sub(r"(\s\.){2,}", " ", data)
+    data = re.sub(r"\s{2,}", " ", data)
+    data = data.lower() if lower else data
+
+    # split all tokens, form a list
+    return [x.strip() for x in data.split() if x.strip()]
+print(clean_tokenize("' . . . mafia , rap stars and hood rats butt their ugly heads in a regurgitation of cinematic violence that gives brutal birth to an unlikely , but likable , hero . '"))

@@ -152,7 +152,6 @@ def build_model(args: SNNArgs):
     elif args.mode == "conversion":
         args.model = TextCNN(args, spike_grad=args.spike_grad).to(args.device)
         args.model.load_state_dict(torch.load(args.conversion_model_path), strict=False)
-        args.model.initial()
     return
 
 def build_optimizer(args: SNNArgs):
@@ -298,7 +297,7 @@ def attack(args: SNNArgs):
     attack_log_manager.log_summary()
     pass
     
-def ann_train(args):
+def ann_train(args: SNNArgs):
     def get_tensor_dataset(file):
         glove_dict = {}
         with open(args.vocab_path, "r") as f:
@@ -334,18 +333,18 @@ def ann_train(args):
         dataset = TensorDataset(embedding_tuple_list)
         return dataset
     
-    # build_dataset(args=args)
-    # build_dataset(args=args, split='test')
-    # build_dataloader(args=args, dataset=args.train_dataset)
-    # build_dataloader(args=args, dataset=args.test_dataset, split='test')
+    build_dataset(args=args)
+    build_dataset(args=args, split='test')
+    build_dataloader(args=args, dataset=args.train_dataset)
+    build_dataloader(args=args, dataset=args.test_dataset, split='test')
 
     build_model(args)
     build_optimizer(args)
     build_criterion(args)
 
-    build_dataloader(args=args, dataset=get_tensor_dataset("data/sst2/train.txt"))
-    test_dataset = get_tensor_dataset("data/sst2/dev.txt")
-    build_dataloader(args=args, dataset=test_dataset, split='test')
+    # build_dataloader(args=args, dataset=get_tensor_dataset("data/sst2/train.txt"))
+    test_dataset = get_tensor_dataset(f"data/{args.dataset_name}/test.txt")
+    # build_dataloader(args=args, dataset=test_dataset, split='test')
 
     acc_list = []
     for epoch in tqdm(range(args.epochs)):
@@ -373,6 +372,30 @@ def ann_train(args):
     output_message(np.max(acc_list))
     pass
 
+def conversion(args: SNNArgs):
+    if args.conversion_mode == "normalize":
+        build_surrogate(args)
+        args.model = TextCNN(args, spike_grad=args.spike_grad).to(args.device)
+        build_dataset(args=args, split='test')
+        build_rated_dataset(args, split='test')
+        build_dataloader(args=args, dataset=args.test_rated_dataset, split='test')
+        
+        saved_weights = torch.load(args.conversion_model_path)
+        args.model.load_state_dict(saved_weights, strict=False)
+
+        if args.conversion_normalize_type == "model_base":
+            
+            args.model.load_state_dict(saved_weights, strict=False)
+        elif args.conversion_normalize_type == "data_base":
+            args.model.load_state_dict(saved_weights, strict=False)
+
+        acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=2)
+        output_message("Test acc of conversioned TextCNN is: {}".format(acc))
+    elif args.conversion_mode == "tune":
+        train(args)
+    pass
+
+
 if __name__ == "__main__":
     args = SNNArgs.parse()
     build_environment(args)
@@ -382,9 +405,9 @@ if __name__ == "__main__":
     output_message("Program args: {}".format(args))
     if args.mode == 'train' and args.model_mode == "snn":
         train(args)
-    elif args.mode == 'attack':
-        attack(args)
     elif args.mode == 'train' and args.model_mode == "ann":
         ann_train(args)
+    elif args.mode == 'attack':
+        attack(args)
     elif args.mode == "conversion":
-        train(args)
+        conversion(args)

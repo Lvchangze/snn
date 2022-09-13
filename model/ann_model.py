@@ -6,10 +6,13 @@ class ANN_TextCNN(nn.Module):
     def __init__(self, args) -> None:
         super().__init__()
         self.convs_1 = nn.ModuleList([
-            nn.Conv2d(in_channels=1, out_channels=args.filter_num, kernel_size=(filter_size, args.hidden_dim))
+            nn.Conv2d(in_channels=1, out_channels=args.filter_num, kernel_size=(filter_size, args.hidden_dim), bias=False)
             for filter_size in args.filters
         ])
-        self.relu_1 = nn.ReLU()
+        self.middle_relu = nn.ModuleList([
+            nn.ReLU()
+            for _ in args.filters
+        ])
         self.avgpool_1 = nn.ModuleList([
             nn.AvgPool2d((args.sentence_length - filter_size + 1, 1)) for filter_size in args.filters
         ])
@@ -25,7 +28,8 @@ class ANN_TextCNN(nn.Module):
         batch_size = x.shape[0]
         x = x.unsqueeze(dim=1)
         conv_out = [conv(x) for conv in self.convs_1]
-        conv_out = [self.relu_1(i) for i in conv_out]
+        conv_out = [self.middle_relu[i](conv_out[i]) for i in range(len(self.middle_relu))]
+        # conv_out = [self.relu_1(i) for i in conv_out]
         # pooled_out = [self.maxpool_1[i](conv_out[i]) for i in range(len(self.maxpool_1))]
         pooled_out = [self.avgpool_1[i](conv_out[i]) for i in range(len(self.avgpool_1))]
         pooled_out = [self.drop(self.relu_2(pool)) for pool in pooled_out]

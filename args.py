@@ -15,7 +15,7 @@ class SNNArgs(argparse.Namespace):
         self.model_mode = "snn" # ['snn', 'ann']
         
         self.dataset_name = 'sst2'
-        self.label_num = 200
+        self.label_num = 2
         self.seed = 42
         self.use_seed = "False"
         self.epochs = 50
@@ -30,9 +30,9 @@ class SNNArgs(argparse.Namespace):
         self.dropout_p = 0.5
         self.optimizer_name = "Adamw"
         self.encode = "rate"  #['rate', 'latency']
-        self.ensemble = "True"
+        self.ensemble = "False"
         self.max_len = 25
-        self.attack_method = 'textfooler' # ['textfooler', 'bae']
+        self.attack_method = 'textfooler' # ["textfooler", "bae", "textbugger", "pso", "pwws", "deepwordbug"]
         self.attack_model_path = 'saved_models/best.pth'
         self.attack_times = 5
         self.attack_numbers = 1000
@@ -46,7 +46,7 @@ class SNNArgs(argparse.Namespace):
         # please modify the renew function together
         self.data_path = f"data/{self.dataset_name}/train_u_3v_{self.dataset_name}_glove100d_sent_len{self.sentence_length}.tensor_dataset"
         self.test_data_path = f"data/{self.dataset_name}/test_u_3v_{self.dataset_name}_glove100d_sent_len{self.sentence_length}.tensor_dataset"
-        self.workspace = '/home/xujh/snn'
+        self.workspace = '/home/lvchangze/snn'
         self.data_dir = os.path.join(self.workspace, "data", self.dataset_name)
         self.logging_dir = os.path.join(self.workspace, 'logs')
         self.saving_dir = os.path.join(self.workspace, "saved_models")
@@ -67,14 +67,20 @@ class SNNArgs(argparse.Namespace):
 
         # conversion
         self.conversion_model_path = "saved_models/conversion.pth"
+        self.conversion_mode = "normalize"              # ["tune", "normalize"]
+        self.conversion_normalize_type = "model_base"   # ["model_base", "data_base"]
 
     def renew_args(self):
         if self.model_mode == "ann" and self.mode == "train":
             self.args_for_logging = ["model_mode", "mode","dataset_name", "sentence_length", "dropout_p", "weight_decay", "batch_size", "learning_rate"]
         elif self.mode == "attack":
             self.args_for_logging = ["model_mode", "mode", "dataset_name", "attack_method","attack_times","attack_numbers"]
-        else:
+        elif self.model_mode == "snn" and self.mode == "train":
             self.args_for_logging = ["model_mode", "mode","dataset_name", "label_num", "positive_init_rate", 'num_steps', 'learning_rate']
+        elif self.mode == "conversion" and self.conversion_mode == "normalize":
+            self.args_for_logging = ["model_mode", "mode", "dataset_name", 'conversion_normalize_type']
+        elif self.mode == "conversion" and self.conversion_mode == "tune":
+            self.args_for_logging = ["model_mode", "mode","dataset_name", "conversion_normalize_type", "label_num", "positive_init_rate", 'num_steps', 'learning_rate']
         self.data_dir = os.path.join(self.workspace, "data", self.dataset_name)
         self.logging_dir = os.path.join(self.workspace, 'logs')
         self.saving_dir = os.path.join(self.workspace, "saved_models")
