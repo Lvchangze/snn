@@ -98,7 +98,7 @@ class TensorEncoder():
                     # embedding_norm = np.clip(embedding_norm, a_min=0, a_max=1)
                 sent_embedding[j] = embedding_norm
             # print(i, sent_embedding)
-            embedding_tuple_list.append((torch.tensor(sent_embedding), label))
+            embedding_tuple_list.append((torch.tensor(sent_embedding, dtype=float), label))
         
         dataset = TensorDataset(embedding_tuple_list)
 
@@ -112,12 +112,12 @@ class TensorEncoder():
 
 if __name__ == "__main__":
     tensor_encoder = TensorEncoder(
-        vocab_path="../data/glove.6B.100d.txt",
-        dataset_name="mr",
-        data_type="train",
-        datafile_path="../data/mr/train.txt",
+        vocab_path="../data/glove.6B.300d.txt",
+        dataset_name="subj",
+        data_type="test",
+        datafile_path="../data/subj/test.txt",
         sent_length=35,
-        embedding_dim=100,
+        embedding_dim=300,
         bias = 3
     )
     tensor_encoder.encode()

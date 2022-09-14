@@ -6,17 +6,18 @@
         "==base==": [
             "--mode",                   ["train"],
             "--model_mode",             ["ann"],   
+            "--model_type",             ["lstm"],
             "--use_seed",               ["False"]
         ],
         "==more==": [
             [
-                "--dataset_name",       ["mr"],
-                "--sentence_length",    ["35"],
-                "--dropout_p",          ["0.5"],
-                "--weight_decay",       ["0.001", "0.01"],
+                "--hidden_dim",         ["300"],
+                "--dataset_name",       ["sst2"],
+                "--sentence_length",    ["25"],
+                "--weight_decay",       ["0.001"],
                 "--batch_size",         ["32"],
-                "--learning_rate",      ["5e-4", "1e-3"],
-                "--epochs",             ["200"]
+                "--learning_rate",      ["5e-4"],
+                "--epochs",             ["60"]
             ]
         ]
     }

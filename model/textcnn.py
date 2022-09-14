@@ -7,7 +7,7 @@ import numpy as np
 from utils.config import INITIAL_MEAN_DICT
 from utils.monitor import Monitor
 
-class TextCNN(nn.Module):
+class SNN_TextCNN(nn.Module):
     def __init__(self, args, spike_grad=surrogate.fast_sigmoid(slope=25)) -> None:
         super().__init__()
         self.dead_neuron_checker = args.dead_neuron_checker

@@ -25,3 +25,19 @@ class RateDataset(Dataset):
         rate_code = self.data[index][0]
         label = int(self.data[index][1])
         return rate_code, label
+
+class TxtDataset(Dataset):
+    def __init__(self, data_path: str):
+        super(TxtDataset, self).__init__()
+        with open(data_path) as fin:
+            self.lines = fin.readlines()
+
+    def __len__(self):
+        return len(self.lines)
+
+    def __getitem__(self, index: int):
+        line = self.lines[index]
+        temp = line.split('\t')
+        sentence = temp[0]
+        label = int(temp[1])
+        return sentence, label

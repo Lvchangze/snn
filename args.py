@@ -11,8 +11,9 @@ class SNNArgs(argparse.Namespace):
         # SUGGESTION: write exp with args_for_logging and save them in every manytask json file 
 
         # training details
-        self.mode = "attack"  # ['train', 'attack', 'conversion']
-        self.model_mode = "snn" # ['snn', 'ann']
+        self.mode = "conversion"  # ['train', 'attack', 'conversion', 'distill']
+        self.model_mode = "ann"   # ['snn', 'ann']
+        self.model_type = 'lstm'  # ["textcnn", "lstm"]
         
         self.dataset_name = 'sst2'
         self.label_num = 2
@@ -44,19 +45,18 @@ class SNNArgs(argparse.Namespace):
         
         # file saver
         # please modify the renew function together
-        self.data_path = f"data/{self.dataset_name}/train_u_3v_{self.dataset_name}_glove100d_sent_len{self.sentence_length}.tensor_dataset"
-        self.test_data_path = f"data/{self.dataset_name}/test_u_3v_{self.dataset_name}_glove100d_sent_len{self.sentence_length}.tensor_dataset"
+        self.data_path = f"data/{self.dataset_name}/train_u_3v_{self.dataset_name}_glove{self.hidden_dim}d_sent_len{self.sentence_length}.tensor_dataset"
+        self.test_data_path = f"data/{self.dataset_name}/test_u_3v_{self.dataset_name}_glove{self.hidden_dim}d_sent_len{self.sentence_length}.tensor_dataset"
         self.workspace = '/home/lvchangze/snn'
         self.data_dir = os.path.join(self.workspace, "data", self.dataset_name)
         self.logging_dir = os.path.join(self.workspace, 'logs')
         self.saving_dir = os.path.join(self.workspace, "saved_models")
-        self.vocab_path = os.path.join(self.workspace, "data/glove.6B.100d.txt")
+        self.vocab_path = os.path.join(self.workspace, f"data/glove.6B.{self.hidden_dim}d.txt")
         self.attack_logging_dir = os.path.join(self.workspace, 'logs_attack')
 
         # network details
         self.surrogate = 'fast_sigmoid'
         self.beta = 1.0
-        self.model_type = 'textcnn'
         self.filters = [3,4,5]
         self.filter_num = 100
         self.initial_method = 'zero' # ['zero', 'normal', 'kaiming', 'xavier', 'k+n', 'k+x']
@@ -70,22 +70,41 @@ class SNNArgs(argparse.Namespace):
         self.conversion_mode = "normalize"              # ["tune", "normalize"]
         self.conversion_normalize_type = "model_base"   # ["model_base", "data_base"]
 
+        # bilstm
+        self.lstm_hidden_size = 150                     # [150, 300]
+        self.lstm_fc1_num = 200                         # [200, 400]
+        self.lstm_layers_num = 1
+        self.bidirectional = "True"
+
+        # distill
+        self.teacher_model_path = "saved_models/bert-base-uncased_2022-09-14 18:27:35_epoch0_0.9335529928610653"
+        self.distill_loss_alpha = 0.0
+        self.student_model_name = "lstm"
+        self.distill_batch = 50
+        self.distill_epoch = 30
+        self.data_augment_path = f"data/{self.dataset_name}/train_augment.txt"
+
+
     def renew_args(self):
         if self.model_mode == "ann" and self.mode == "train":
-            self.args_for_logging = ["model_mode", "mode","dataset_name", "sentence_length", "dropout_p", "weight_decay", "batch_size", "learning_rate"]
+            self.args_for_logging = ["model_mode", "mode", "model_type", "dataset_name", "sentence_length", "dropout_p", "weight_decay", "batch_size", "learning_rate"]
         elif self.mode == "attack":
-            self.args_for_logging = ["model_mode", "mode", "dataset_name", "attack_method","attack_times","attack_numbers"]
+            self.args_for_logging = ["model_mode", "mode", "model_type", "dataset_name", "attack_method","attack_times","attack_numbers"]
         elif self.model_mode == "snn" and self.mode == "train":
-            self.args_for_logging = ["model_mode", "mode","dataset_name", "label_num", "positive_init_rate", 'num_steps', 'learning_rate']
+            self.args_for_logging = ["model_mode", "mode", "model_type", "dataset_name", "label_num", "positive_init_rate", 'num_steps', 'learning_rate']
         elif self.mode == "conversion" and self.conversion_mode == "normalize":
-            self.args_for_logging = ["model_mode", "mode", "dataset_name", 'conversion_normalize_type']
+            self.args_for_logging = ["model_mode", "mode", "model_type", "dataset_name", 'conversion_normalize_type']
         elif self.mode == "conversion" and self.conversion_mode == "tune":
-            self.args_for_logging = ["model_mode", "mode","dataset_name", "conversion_normalize_type", "label_num", "positive_init_rate", 'num_steps', 'learning_rate']
+            self.args_for_logging = ["model_mode", "mode", "model_type", "dataset_name", "conversion_normalize_type", "label_num", "positive_init_rate", 'num_steps', 'learning_rate']
+        elif self.mode == "distill":
+            self.args_for_logging = ["model_mode", "mode", "model_type", "dataset_name", "label_num", 'distill_lr', "distill_loss_alpha"]
         self.data_dir = os.path.join(self.workspace, "data", self.dataset_name)
         self.logging_dir = os.path.join(self.workspace, 'logs')
         self.saving_dir = os.path.join(self.workspace, "saved_models")
-        self.data_path = f"data/{self.dataset_name}/train_u_3v_{self.dataset_name}_glove100d_sent_len{self.sentence_length}.tensor_dataset"
-        self.test_data_path = f"data/{self.dataset_name}/test_u_3v_{self.dataset_name}_glove100d_sent_len{self.sentence_length}.tensor_dataset"
+        self.vocab_path = os.path.join(self.workspace, f"data/glove.6B.{self.hidden_dim}d.txt")
+        self.data_path = f"data/{self.dataset_name}/train_u_3v_{self.dataset_name}_glove{self.hidden_dim}d_sent_len{self.sentence_length}.tensor_dataset"
+        self.test_data_path = f"data/{self.dataset_name}/test_u_3v_{self.dataset_name}_glove{self.hidden_dim}d_sent_len{self.sentence_length}.tensor_dataset"
+        self.data_augment_path = f"data/{self.dataset_name}/train_augment.txt"
 
     @staticmethod
     def parse(verbose=False):

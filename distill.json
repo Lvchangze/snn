@@ -1,0 +1,18 @@
+{
+    "executor": "/home/lvchangze/miniconda3/envs/snn/bin/python main.py",
+    "cuda": [0,1,2,3],
+    "concurrency": 4,
+    "configs": {
+        "==base==": [
+            "--mode",                         ["distill"],
+            "--model_mode",                   ["ann"],
+            "--model_type",                   ["lstm"],
+            "--use_seed",                     ["False"]
+        ],
+        "==more==": [
+            [
+                
+            ]
+        ]
+    }
+}

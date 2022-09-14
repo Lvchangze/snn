@@ -3,7 +3,7 @@ import pickle
 import torch
 from torch.utils.data import Dataset, DataLoader
 from snntorch import spikegen
-from model import TextCNN
+from model import SNN_TextCNN
 from tqdm import tqdm
 import re
 

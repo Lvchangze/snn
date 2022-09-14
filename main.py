@@ -3,7 +3,7 @@ import os
 from random import choices
 import torch
 from torch.utils.data import DataLoader
-from torch.optim import AdamW, SGD
+from torch.optim import AdamW, SGD, Adadelta
 from torch.optim.lr_scheduler import LambdaLR, StepLR
 import torch.nn.functional as F
 from tqdm import tqdm
@@ -18,7 +18,7 @@ from snntorch.backprop import BPTT
 import snntorch.functional as SF
 from snntorch import spikegen
 import snntorch.surrogate as surrogate
-from model import TextCNN, ANN_TextCNN
+from model import SNN_TextCNN, ANN_TextCNN, ANN_BiLSTM, SNN_BiLSTM
 import numpy as np
 from utils.filecreater import FileCreater
 from utils.monitor import Monitor
@@ -31,7 +31,8 @@ from textattack.loggers import AttackLogManager, attack_log_manager
 from utils.metrics import SimplifidResult
 import textattack
 import time
-from dataset import TensorDataset
+from dataset import TensorDataset, TxtDataset
+from transformers import BertTokenizer, BertForSequenceClassification
 
 def build_environment(args: SNNArgs):
     args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -145,13 +146,17 @@ def build_criterion(args: SNNArgs):
 def build_model(args: SNNArgs):
     output_message("Build model...")
     if args.model_mode == "ann":
-        args.model = ANN_TextCNN(args).to(args.device)
+        if args.model_type == "textcnn":
+            args.model = ANN_TextCNN(args).to(args.device)
+        elif args.model_type == "lstm":
+            args.model = ANN_BiLSTM(args).to(args.device)
     elif args.model_mode == "snn":
-        args.model = TextCNN(args, spike_grad=args.spike_grad).to(args.device)
-        args.model.initial()
-    elif args.mode == "conversion":
-        args.model = TextCNN(args, spike_grad=args.spike_grad).to(args.device)
-        args.model.load_state_dict(torch.load(args.conversion_model_path), strict=False)
+        if args.model_type == "textcnn":
+            args.model = SNN_TextCNN(args, spike_grad=args.spike_grad).to(args.device)
+            args.model.initial()
+        elif args.model_type == "lstm":
+            args.model = SNN_BiLSTM(args, spike_grad=args.spike_grad).to(args.device)
+    print(args.model)
     return
 
 def build_optimizer(args: SNNArgs):
@@ -211,8 +216,9 @@ def train(args):
     build_model(args)
 
     if args.mode == "conversion":
+        args.model.load_state_dict(torch.load(args.conversion_model_path), strict=False)
         acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=2)
-        output_message("Test acc of initial conversion TextCNN is: {}".format(acc))
+        output_message("Test acc of conversioned {} is: {}".format(args.model_type, acc))
 
     build_optimizer(args)
     build_criterion(args)
@@ -375,7 +381,10 @@ def ann_train(args: SNNArgs):
 def conversion(args: SNNArgs):
     if args.conversion_mode == "normalize":
         build_surrogate(args)
-        args.model = TextCNN(args, spike_grad=args.spike_grad).to(args.device)
+        if args.model_type == "lstm":
+            args.model = SNN_BiLSTM(args, spike_grad=args.spike_grad).to(args.device)
+        else:
+            args.model = SNN_TextCNN(args, spike_grad=args.spike_grad).to(args.device)
         build_dataset(args=args, split='test')
         build_rated_dataset(args, split='test')
         build_dataloader(args=args, dataset=args.test_rated_dataset, split='test')
@@ -384,17 +393,44 @@ def conversion(args: SNNArgs):
         args.model.load_state_dict(saved_weights, strict=False)
 
         if args.conversion_normalize_type == "model_base":
-            
             args.model.load_state_dict(saved_weights, strict=False)
         elif args.conversion_normalize_type == "data_base":
             args.model.load_state_dict(saved_weights, strict=False)
 
         acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=2)
-        output_message("Test acc of conversioned TextCNN is: {}".format(acc))
+        output_message("Test acc of conversioned {} is: {}".format(args.model_type, acc))
     elif args.conversion_mode == "tune":
         train(args)
     pass
 
+def distill(args: SNNArgs):
+    teacher_tokenizer = BertTokenizer.from_pretrained(args.teacher_model_path)
+    teacher_model = BertForSequenceClassification.from_pretrained(args.teacher_model_path, num_labels=args.label_num)
+    if args.student_model_name == "lstm":
+        student_model = ANN_BiLSTM(args)
+    elif args.student_model_name == "textcnn":
+        student_model = ANN_TextCNN(args)
+    optimizer = Adadelta(lr = 1.0, rho=0.95)
+    teacher_data_loader = DataLoader(dataset=TxtDataset(data_path=args.data_augment_path), batch_size= args.distill_batch, shuffle=True)
+    def to_device(x, device):
+        for key in x:
+            x[key] = x[key].to(device)
+    def one_zero_normal(text_list):
+        # TODO
+        pass
+    for epoch in tqdm(range(args.distill_epoch)):
+        teacher_model.eval()
+        for i, batch in enumerate(teacher_data_loader):
+            teacher_inputs = teacher_tokenizer(batch[0], padding=True, truncation=True, return_tensors="pt")
+            to_device(teacher_inputs, args.device)
+            teacher_logits = teacher_model(**teacher_inputs).logits
+            student_inputs = one_zero_normal(list(batch[0]))
+            student_logits = student_model(student_inputs)
+            loss = F.mse_loss(student_logits, teacher_logits)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+    pass
 
 if __name__ == "__main__":
     args = SNNArgs.parse()
@@ -411,3 +447,5 @@ if __name__ == "__main__":
         attack(args)
     elif args.mode == "conversion":
         conversion(args)
+    elif args.mode == "distill":
+        distill(args)

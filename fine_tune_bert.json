@@ -1,0 +1,15 @@
+{
+    "executor": "python distill.py",
+    "cuda": [0, 1, 2, 3],
+    "concurrency": 1,
+    "configs": {
+        "==base==": [
+        ],
+        "==more==": [
+            [
+                "--teacher_model_name",  ["bert-base-uncased"],
+                "--fine_tune_lr",        ["2e-5", "3e-5", "4e-5", "5e-5"]
+            ]
+        ]
+    }
+}

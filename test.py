@@ -1,13 +1,20 @@
+from unicodedata import bidirectional
 import numpy as np
 import pickle
 import torch
+import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
-from model.textcnn import TextCNN
+from model.textcnn import SNN_TextCNN
 from snntorch import spikegen
 from tqdm import tqdm
 import re
 import math
 from datasets import load_dataset
+import random
+import nltk
+from nltk import word_tokenize
+from dataset import TxtDataset
+
 # bias = 0.08
 
 # w = torch.empty(300, 2)
@@ -40,14 +47,36 @@ from datasets import load_dataset
 #     print(dataset[1])
 
 
-def clean_tokenize(data, lower=False):
-    # recover some abbreviations
-    data = re.sub(r"\-", " ", data)
-    data = re.sub(r"\/", " ", data)
-    data = re.sub(r"(\s\.){2,}", " ", data)
-    data = re.sub(r"\s{2,}", " ", data)
-    data = data.lower() if lower else data
+# class BiLSTM(nn.Module):
+#     def __init__(self) -> None:
+#         super(BiLSTM, self).__init__()
+#         self.lstm = nn.LSTM(batch_first=True, input_size=100, hidden_size=150, num_layers=1, bidirectional=True, bias=False)
+#         self.fc_1 = nn.Linear(150 * 2, 200, bias=False)
+#         self.relu = nn.ReLU()
+#         self.output_fc = nn.Linear(200, 2, bias=False)
 
-    # split all tokens, form a list
-    return [x.strip() for x in data.split() if x.strip()]
-print(clean_tokenize("' . . . mafia , rap stars and hood rats butt their ugly heads in a regurgitation of cinematic violence that gives brutal birth to an unlikely , but likable , hero . '"))
+#     def forward(self, x):
+#         print(x.shape)
+#         output, (hidden,cell) = self.lstm(x)
+#         x = self.fc_1(output)
+#         x = self.relu(x)
+#         fc_output = self.output_fc(x)
+#         fc_output = fc_output[:,-1,:].squeeze(1)
+#         return fc_output
+
+# lstm = BiLSTM()
+# x = torch.randn(32, 25, 100)
+# o = lstm(x)
+# print(o.shape)
+
+
+# device_ids = [i for i in range(torch.cuda.device_count())]
+# if torch.cuda.device_count() > 1:
+#     print("\n\nLet's use", torch.cuda.device_count(), "GPUs!\n\n")
+# if len(device_ids) > 1:
+#     model = nn.DataParallel(model, device_ids=device_ids)
+
+teacher_data_loader = DataLoader(dataset=TxtDataset(data_path="data/sst2/train_augment.txt"), batch_size= 50, shuffle=True)
+for i, batch in enumerate(teacher_data_loader):
+    for text in list(batch[0]):
+        print(text)
