@@ -8,6 +8,7 @@ from tqdm import tqdm
 import os
 from dataset import TensorDataset
 from datasets import load_dataset
+import nltk
 
 
 def get_samples_from_text(datafile_path):
@@ -29,18 +30,6 @@ def get_samples_from_web(dataset_name, data_type):
         label = int(sample['label'])
         sample_list.append((sentence, label))
     return sample_list
-
-
-def clean_tokenize(data, lower=False):
-    # recover some abbreviations
-    data = re.sub(r"\-", " ", data)
-    data = re.sub(r"\/", " ", data)
-    data = re.sub(r"(\s\.){2,}", " ", data)
-    data = re.sub(r"\s{2,}", " ", data)
-    data = data.lower() if lower else data
-
-    # split all tokens, form a list
-    return [x.strip() for x in data.split() if x.strip()]
 
 class TensorEncoder():
     def __init__(self, vocab_path, dataset_name, datafile_path, sent_length:int, embedding_dim:int, data_type="trian", bias=3) -> None:
@@ -75,7 +64,7 @@ class TensorEncoder():
         embedding_tuple_list = []
         for i in tqdm(range(len(sample_list))):
             sent_embedding = np.array([[0] * self.embedding_dim] * self.sent_length, dtype=float)
-            text_list = clean_tokenize(sample_list[i][0])
+            text_list = nltk.word_tokenize(sample_list[i][0])
             label = sample_list[i][1]
             for j in range(self.sent_length):
                 if j >= len(text_list):
@@ -113,10 +102,10 @@ class TensorEncoder():
 if __name__ == "__main__":
     tensor_encoder = TensorEncoder(
         vocab_path="../data/glove.6B.300d.txt",
-        dataset_name="subj",
+        dataset_name="sst2",
         data_type="test",
-        datafile_path="../data/subj/test.txt",
-        sent_length=35,
+        datafile_path="../data/sst2/test.txt",
+        sent_length=25,
         embedding_dim=300,
         bias = 3
     )
