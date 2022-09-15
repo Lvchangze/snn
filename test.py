@@ -14,7 +14,7 @@ import random
 import nltk
 from nltk import word_tokenize
 from dataset import TxtDataset
-
+from transformers import BertTokenizer
 # bias = 0.08
 
 # w = torch.empty(300, 2)
@@ -76,7 +76,55 @@ from dataset import TxtDataset
 # if len(device_ids) > 1:
 #     model = nn.DataParallel(model, device_ids=device_ids)
 
-teacher_data_loader = DataLoader(dataset=TxtDataset(data_path="data/sst2/train_augment.txt"), batch_size= 50, shuffle=True)
-for i, batch in enumerate(teacher_data_loader):
-    for text in list(batch[0]):
-        print(text)
+# glove_dict = {}
+# with open("data/glove.6B.300d.txt", "r") as f:
+#     for line in f:
+#         values = line.split()
+#         word = values[0]
+#         vector = np.asarray(values[1:], "float32")
+#         glove_dict[word] = vector
+# hidden_dim = glove_dict['the'].shape[-1]
+# mean_value = np.mean(list(glove_dict.values()))
+# variance_value = np.var(list(glove_dict.values()))
+# left_boundary = mean_value - 3 * np.sqrt(variance_value)
+# right_boundary = mean_value + 3 * np.sqrt(variance_value)
+# for key in glove_dict.keys():
+#     temp_clip = np.clip(glove_dict[key], left_boundary, right_boundary)
+#     temp = (temp_clip - mean_value) / (3 * np.sqrt(variance_value))
+#     glove_dict[key] = (temp + 1) / 2
+# glove_dict = glove_dict
+# glove_dict['<pad>'] = [0] * hidden_dim
+# glove_dict['<unk>'] = [0] * hidden_dim
+# sentence_length = 25
+
+# def one_zero_normal(text_list, dict):
+#     batch_embedding_list = []
+#     for text in text_list:
+#         text = text.lower()
+#         text_embedding = []
+#         words = list(map(lambda x: x if x in dict.keys() else '<unk>', text.strip().split()))
+#         if len(words) > sentence_length:
+#             words = words[:sentence_length]
+#         elif len(words) < sentence_length:
+#             while len(words) < sentence_length:
+#                 words.append('<pad>')
+#         for i in range(len(words)):
+#             text_embedding.append(dict[words[i]])
+#         batch_embedding_list.append(text_embedding)
+#     return batch_embedding_list
+
+# teacher_data_loader = DataLoader(dataset=TxtDataset(data_path="data/sst2/train_augment.txt"), batch_size= 50, shuffle=True)
+# for i, batch in enumerate(teacher_data_loader):
+#     # print(len(batch[0])) # 50
+    
+#     print(torch.tensor(one_zero_normal(list(batch[0]), glove_dict), dtype=float))
+    
+# with open("data/sst2/test_u_3v_sst2_glove300d_sent_len25.tensor_dataset", 'rb') as f:
+#     test_dataset = pickle.load(f)
+# print(len(test_dataset))
+
+# with open("data/sst2/train_augment.txt") as fin:
+#     lines = fin.readlines()
+#     for line in lines:
+#         print(line.strip())
+

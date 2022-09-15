@@ -97,7 +97,7 @@ class SNNArgs(argparse.Namespace):
         elif self.mode == "conversion" and self.conversion_mode == "tune":
             self.args_for_logging = ["model_mode", "mode", "model_type", "dataset_name", "conversion_normalize_type", "label_num", "positive_init_rate", 'num_steps', 'learning_rate']
         elif self.mode == "distill":
-            self.args_for_logging = ["model_mode", "mode", "model_type", "dataset_name", "label_num", 'distill_lr', "distill_loss_alpha"]
+            self.args_for_logging = ["model_mode", "mode", "model_type", "dataset_name", "label_num", "distill_loss_alpha", "student_model_name", "distill_batch", "distill_epoch"]
         self.data_dir = os.path.join(self.workspace, "data", self.dataset_name)
         self.logging_dir = os.path.join(self.workspace, 'logs')
         self.saving_dir = os.path.join(self.workspace, "saved_models")

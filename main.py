@@ -405,31 +405,96 @@ def conversion(args: SNNArgs):
 
 def distill(args: SNNArgs):
     teacher_tokenizer = BertTokenizer.from_pretrained(args.teacher_model_path)
-    teacher_model = BertForSequenceClassification.from_pretrained(args.teacher_model_path, num_labels=args.label_num)
+    teacher_model = BertForSequenceClassification.from_pretrained(args.teacher_model_path, num_labels=args.label_num).to(args.device)
+    for param in teacher_model.parameters():
+        param.requires_grad = False
+
     if args.student_model_name == "lstm":
-        student_model = ANN_BiLSTM(args)
+        student_model = ANN_BiLSTM(args).to(args.device)
     elif args.student_model_name == "textcnn":
-        student_model = ANN_TextCNN(args)
-    optimizer = Adadelta(lr = 1.0, rho=0.95)
-    teacher_data_loader = DataLoader(dataset=TxtDataset(data_path=args.data_augment_path), batch_size= args.distill_batch, shuffle=True)
+        student_model = ANN_TextCNN(args).to(args.device)
+    optimizer = Adadelta(student_model.parameters() ,lr = 1.0, rho=0.95)
+    teacher_data_loader = DataLoader(dataset=TxtDataset(data_path=args.data_augment_path), batch_size= args.distill_batch, shuffle=False)
+    
+    build_dataset(args=args, split='test')
+    build_dataloader(args=args, dataset=args.test_dataset, split='test')
+    test_dataset = len(args.test_dataset)
+
     def to_device(x, device):
         for key in x:
             x[key] = x[key].to(device)
-    def one_zero_normal(text_list):
-        # TODO
-        pass
+    def get_dict():
+        glove_dict = {}
+        with open(args.vocab_path, "r") as f:
+            for line in f:
+                values = line.split()
+                word = values[0]
+                vector = np.asarray(values[1:], "float32")
+                glove_dict[word] = vector
+        hidden_dim = glove_dict['the'].shape[-1]
+        mean_value = np.mean(list(glove_dict.values()))
+        variance_value = np.var(list(glove_dict.values()))
+        left_boundary = mean_value - 3 * np.sqrt(variance_value)
+        right_boundary = mean_value + 3 * np.sqrt(variance_value)
+        for key in glove_dict.keys():
+            temp_clip = np.clip(glove_dict[key], left_boundary, right_boundary)
+            temp = (temp_clip - mean_value) / (3 * np.sqrt(variance_value))
+            glove_dict[key] = (temp + 1) / 2
+        glove_dict = glove_dict
+        glove_dict['<pad>'] = [0] * hidden_dim
+        glove_dict['<unk>'] = [0] * hidden_dim
+        return glove_dict
+    
+    glove_dict = get_dict()
+
+    def one_zero_normal(text_list, dict):
+        batch_embedding_list = []
+        for text in text_list:
+            text = text.lower()
+            text_embedding = []
+            words = list(map(lambda x: x if x in dict.keys() else '<unk>', text.strip().split()))
+            if len(words) > args.sentence_length:
+                words = words[:args.sentence_length]
+            elif len(words) < args.sentence_length:
+                while len(words) < args.sentence_length:
+                    words.append('<pad>')
+            for i in range(len(words)):
+                text_embedding.append(dict[words[i]])
+            batch_embedding_list.append(text_embedding)
+        return batch_embedding_list
+
+    student_data = []
+    for i, batch in enumerate(teacher_data_loader):
+        student_data.append(one_zero_normal(list(batch[0]), glove_dict))
+    
+    output_message("Train Begins...")
+
     for epoch in tqdm(range(args.distill_epoch)):
         teacher_model.eval()
+        student_model.train()
         for i, batch in enumerate(teacher_data_loader):
             teacher_inputs = teacher_tokenizer(batch[0], padding=True, truncation=True, return_tensors="pt")
             to_device(teacher_inputs, args.device)
-            teacher_logits = teacher_model(**teacher_inputs).logits
-            student_inputs = one_zero_normal(list(batch[0]))
+            teacher_logits = teacher_model(**teacher_inputs).logits   
+            student_inputs = torch.tensor(student_data[i], dtype=float).to(args.device)
             student_logits = student_model(student_inputs)
             loss = F.mse_loss(student_logits, teacher_logits)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+        
+        saved_path = FileCreater.build_saving_file(args, description="-epoch{}".format(epoch))
+        save_model_to_file(save_path=saved_path, model=student_model)
+
+        student_model.eval()
+        with torch.no_grad():
+            correct = 0
+            for data, y_batch in args.test_dataloader:
+                data = data.to(args.device)
+                y_batch = y_batch.to(args.device)
+                output = student_model(data)
+                correct += int(y_batch.eq(torch.max(output,1)[1]).sum())
+        output_message(f"Epoch {epoch} Acc: {float(correct/len(test_dataset))}")
     pass
 
 if __name__ == "__main__":

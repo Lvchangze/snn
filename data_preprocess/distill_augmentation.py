@@ -104,18 +104,22 @@ def augment(args, word_list, pos_tag_tuple_list, pos_dict):
 def main(args):
     sample_list = get_samples_from_text(args.train_data_path)
     pos_dict = get_poc_tag_dict(args.train_data_path)
+    output_list = []
+    for sentence, label in tqdm(sample_list):
+        sent_augment_list = []
+        word_list = word_tokenize(sentence)
+        pos_tag_tuple_list = nltk.pos_tag(word_list)
+        for iter in range(args.n_iter):
+            new_sentence = augment(args, word_list, pos_tag_tuple_list, pos_dict)
+            if new_sentence not in sent_augment_list:
+                sent_augment_list.append(new_sentence)
+            else:
+                continue
+        output_list.extend(sent_augment_list)
+    random.shuffle(output_list)
     with open(args.output_path, "w") as fout:
-        for sentence, label in tqdm(sample_list):
-            sent_augment_list = []
-            word_list = word_tokenize(sentence)
-            pos_tag_tuple_list = nltk.pos_tag(word_list)
-            for iter in range(args.n_iter):
-                new_sentence = augment(args, word_list, pos_tag_tuple_list, pos_dict)
-                if new_sentence not in sent_augment_list:
-                    sent_augment_list.append(new_sentence)
-                    fout.write(str(new_sentence) + "\t" + str(random.choice([0, 1])) + "\n")
-                else:
-                    continue
+        for s in output_list:
+            fout.write(str(s) + "\t" + str(random.choice([0, 1])) + "\n")
     pass
 
 

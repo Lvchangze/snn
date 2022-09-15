@@ -31,12 +31,14 @@ class TxtDataset(Dataset):
         super(TxtDataset, self).__init__()
         with open(data_path) as fin:
             self.lines = fin.readlines()
+        
 
     def __len__(self):
         return len(self.lines)
 
     def __getitem__(self, index: int):
         line = self.lines[index]
+        line = line.strip()
         temp = line.split('\t')
         sentence = temp[0]
         label = int(temp[1])
