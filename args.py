@@ -93,11 +93,11 @@ class SNNArgs(argparse.Namespace):
         elif self.model_mode == "snn" and self.mode == "train":
             self.args_for_logging = ["model_mode", "mode", "model_type", "dataset_name", "label_num", "positive_init_rate", 'num_steps', 'learning_rate']
         elif self.mode == "conversion" and self.conversion_mode == "normalize":
-            self.args_for_logging = ["model_mode", "mode", "model_type", "dataset_name", 'conversion_normalize_type']
+            self.args_for_logging = ["model_mode", "mode", "conversion_mode", "model_type", "dataset_name", 'conversion_normalize_type']
         elif self.mode == "conversion" and self.conversion_mode == "tune":
-            self.args_for_logging = ["model_mode", "mode", "model_type", "dataset_name", "conversion_normalize_type", "label_num", "positive_init_rate", 'num_steps', 'learning_rate']
+            self.args_for_logging = ["model_mode", "mode", "conversion_mode", "model_type", "dataset_name", "conversion_normalize_type", "label_num", "positive_init_rate", 'num_steps', 'learning_rate']
         elif self.mode == "distill":
-            self.args_for_logging = ["model_mode", "mode", "model_type", "dataset_name", "label_num", "distill_loss_alpha", "student_model_name", "distill_batch", "distill_epoch"]
+            self.args_for_logging = ["model_mode", "mode", "student_model_name", "dataset_name", "label_num", "distill_loss_alpha", "student_model_name", "distill_batch", "distill_epoch"]
         self.data_dir = os.path.join(self.workspace, "data", self.dataset_name)
         self.logging_dir = os.path.join(self.workspace, 'logs')
         self.saving_dir = os.path.join(self.workspace, "saved_models")

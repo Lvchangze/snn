@@ -1,0 +1,19 @@
+{
+    "executor": "/home/lvchangze/miniconda3/envs/snn/bin/python main.py",
+    "cuda": [0],
+    "concurrency": 1,
+    "configs": {
+        "==base==": [
+            "--mode",                         ["distill"],
+            "--model_mode",                   ["ann"],
+            "--student_model_name",           ["textcnn"],
+            "--use_seed",                     ["False"],
+            "--hidden_dim",                   ["300"]
+        ],
+        "==more==": [
+            [
+                "--student_model_name",       ["textcnn"]
+            ]
+        ]
+    }
+}

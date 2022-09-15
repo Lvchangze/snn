@@ -1,16 +1,19 @@
 {
     "executor": "/home/lvchangze/miniconda3/envs/snn/bin/python main.py",
-    "cuda": [0,1,2,3],
-    "concurrency": 4,
+    "cuda": [1],
+    "concurrency": 1,
     "configs": {
         "==base==": [
             "--mode",                         ["distill"],
             "--model_mode",                   ["ann"],
             "--model_type",                   ["lstm"],
-            "--use_seed",                     ["False"]
+            "--use_seed",                     ["False"],
+            "--hidden_dim",                   ["300"]
         ],
         "==more==": [
-            []
+            [
+                "--student_model_name",       ["lstm"]
+            ]
         ]
     }
 }

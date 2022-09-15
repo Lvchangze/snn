@@ -418,7 +418,7 @@ def distill(args: SNNArgs):
     
     build_dataset(args=args, split='test')
     build_dataloader(args=args, dataset=args.test_dataset, split='test')
-    test_dataset = len(args.test_dataset)
+    test_dataset = args.test_dataset
 
     def to_device(x, device):
         for key in x:

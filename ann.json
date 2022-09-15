@@ -1,12 +1,12 @@
 {
     "executor": "python main.py",
-    "cuda": [0,1,2,3],
-    "concurrency": 4,
+    "cuda": [2],
+    "concurrency": 1,
     "configs": {
         "==base==": [
             "--mode",                   ["train"],
             "--model_mode",             ["ann"],   
-            "--model_type",             ["lstm"],
+            "--model_type",             ["textcnn"],
             "--use_seed",               ["False"]
         ],
         "==more==": [
