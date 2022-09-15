@@ -87,7 +87,9 @@ def fine_tune_teacher_model(args):
     test_data_loader = DataLoader(dataset=test_dataset, batch_size=args.batch_size, shuffle=False,drop_last=False)
     
     device_ids = [i for i in range(torch.cuda.device_count())]
-    
+    if len(device_ids) > 1:
+        model = nn.DataParallel(model, device_ids=device_ids)
+
     model.train()
     model.to(device)
     

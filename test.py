@@ -34,8 +34,8 @@ from transformers import BertTokenizer
 # latency = spikegen.latency(w, num_steps=30)
 # print(latency.size())
 
-# dataset = load_dataset("sst2", split="test")
-# print(dataset[0])
+dataset = load_dataset("sst", split="train")
+print(len(dataset))
 
 # model  = TextCNN()
 # model = model.load_state_dict(torch.load("saved_models/conversion.pth"))
