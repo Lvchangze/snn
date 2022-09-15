@@ -135,11 +135,11 @@ def build_criterion(args: SNNArgs):
                 args.loss_fn = SF.mse_temporal_loss()
         else:
             if args.loss == 'ce_count':
-                args.loss_fn = SF.ce_count_loss(population_code=True, num_classes=2)
+                args.loss_fn = SF.ce_count_loss(population_code=True, num_classes=args.label_num)
             elif args.loss == "ce_rate":
-                args.loss_fn = SF.ce_rate_loss(population_code=True, num_classes=2)
+                args.loss_fn = SF.ce_rate_loss(population_code=True, num_classes=args.label_num)
             elif args.loss == "mse_count":
-                args.loss_fn = SF.mse_count_loss(correct_rate=1.0, incorrect_rate=0.0, population_code=True, num_classes=2)
+                args.loss_fn = SF.mse_count_loss(correct_rate=1.0, incorrect_rate=0.0, population_code=True, num_classes=args.label_num)
         
     return
 
@@ -217,7 +217,7 @@ def train(args):
 
     if args.mode == "conversion":
         args.model.load_state_dict(torch.load(args.conversion_model_path), strict=False)
-        acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=2)
+        acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=args.label_num)
         output_message("Test acc of conversioned {} is: {}".format(args.model_type, acc))
 
     build_optimizer(args)
@@ -239,7 +239,7 @@ def train(args):
         output_message("Training epoch {}, avg_loss: {}.".format(epoch, avg_loss))
         saved_path = FileCreater.build_saving_file(args,description="-epoch{}".format(epoch))
         save_model_to_file(save_path=saved_path, model=args.model)
-        acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=2)
+        acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=args.label_num)
         output_message("Test acc in epoch {} is: {}".format(epoch, acc))
         acc_list.append(acc)
         if args.dead_neuron_checker == "True":
@@ -397,7 +397,7 @@ def conversion(args: SNNArgs):
         elif args.conversion_normalize_type == "data_base":
             args.model.load_state_dict(saved_weights, strict=False)
 
-        acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=2)
+        acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=args.label_num)
         output_message("Test acc of conversioned {} is: {}".format(args.model_type, acc))
     elif args.conversion_mode == "tune":
         train(args)

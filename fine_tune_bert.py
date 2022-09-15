@@ -3,7 +3,7 @@ import torch.nn as nn
 import pickle
 import argparse
 import torch.nn.functional as F
-from torch.optim import AdamW
+from torch.optim import Adam
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 import numpy as np
@@ -19,6 +19,11 @@ def to_device(x, device):
 
 def args():
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--dataset_name",
+        default="sst2",
+        type=str,
+    )
     parser.add_argument(
         "--train_data_path",
         default="data/sst2/train.txt",
@@ -50,11 +55,6 @@ def args():
         type=float
     )
     parser.add_argument(
-        "--embedding_dim",
-        default=300,
-        type=int
-    )
-    parser.add_argument(
         "--epochs",
         default=3,
         type=int
@@ -70,16 +70,6 @@ def args():
         type=str
     )
     parser.add_argument(
-        "--student_model_name",
-        default="lstm",
-        type=str
-    )
-    parser.add_argument(
-        "--distill_loss_alpha",
-        default=0.0,
-        type=float
-    )
-    parser.add_argument(
         "--label_num",
         default=2,
         type=int
@@ -91,7 +81,7 @@ def fine_tune_teacher_model(args):
     device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
     tokenizer = BertTokenizer.from_pretrained(args.teacher_model_name)
     model = BertForSequenceClassification.from_pretrained(args.teacher_model_name, num_labels=args.label_num)
-    optimizer = AdamW(model.parameters(), lr=args.fine_tune_lr)
+    optimizer = Adam(model.parameters(), lr=args.fine_tune_lr)
     train_data_loader = DataLoader(dataset=TxtDataset(data_path=args.train_data_path), batch_size= args.batch_size, shuffle=True)
     test_dataset = TxtDataset(data_path=args.test_data_path)
     test_data_loader = DataLoader(dataset=test_dataset, batch_size=args.batch_size, shuffle=False,drop_last=False)
@@ -129,21 +119,12 @@ def fine_tune_teacher_model(args):
         acc = float(correct)/all 
         print(f"Epoch {epoch} Acc: {float(correct/len(test_dataset))}")
         current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-        tokenizer.save_pretrained(f"saved_models/{args.teacher_model_name}_{current_time}_epoch{epoch}_{acc}")
-        model.save_pretrained(f"saved_models/{args.teacher_model_name}_{current_time}_epoch{epoch}_{acc}")
-        model.module.save_pretrained(f"saved_models/{args.teacher_model_name}_{current_time}_epoch{epoch}_{acc}")
+        tokenizer.save_pretrained(f"saved_models/{args.teacher_model_name}_{current_time}_{args.dataset_name}_epoch{epoch}_{acc}")
+        model.save_pretrained(f"saved_models/{args.teacher_model_name}_{current_time}_{args.dataset_name}_epoch{epoch}_{acc}")
+        # model.module.save_pretrained(f"saved_models/{args.teacher_model_name}_{current_time}_{args.dataset_name}_epoch{epoch}_{acc}")
     pass
-
-def distill(args):
-    teacher_tokenizer = BertTokenizer.from_pretrained(args.teacher_model_path)
-    teacher_model = BertForSequenceClassification.from_pretrained(args.teacher_model_path, num_labels=args.label_num)
-    student_model = ANN_BiLSTM(args)
-
 
 if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     _args = args()
-    if os.path.exists(_args.teacher_model_path):
-        distill(_args)
-    else:
-        fine_tune_teacher_model(_args)
+    fine_tune_teacher_model(_args)
