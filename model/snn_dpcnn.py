@@ -1,37 +1,36 @@
 import torch
 import torch.nn as nn
 import numpy as np
+import snntorch.surrogate as surrogate
+import snntorch as snn
 
-class ANN_DPCNN(nn.Module):
-    def __init__(self, args):
+class SNN_DPCNN(nn.Module):
+    def __init__(self, args, spike_grad=surrogate.fast_sigmoid(slope=25)):
         super().__init__()
         self.label_num = args.label_num
         self.mode = args.mode
-        self.conv_region = nn.Conv2d(1, args.filter_num, (args.dpcnn_step_length, args.hidden_dim), stride=1, bias=False)
+        self.conv_region = nn.Conv2d(1, args.filter_num, (3, args.hidden_dim), stride=1, bias=False)
         self.conv_1 = nn.Conv2d(args.filter_num, args.filter_num, (args.dpcnn_step_length, 1), stride=1, bias=False)
-        self.relu1 = nn.ReLU()
+        self.lif1 = snn.Leaky(beta=args.beta, spike_grad=spike_grad, init_hidden=True, threshold=1.0)
         self.conv_2 = nn.Conv2d(args.filter_num, args.filter_num, (args.dpcnn_step_length, 1), stride=1, bias=False)
-        self.relu2 = nn.ReLU()
-        # self.layer_embeddings = []
+        self.lif2 = snn.Leaky(beta=args.beta, spike_grad=spike_grad, init_hidden=True, threshold=1.0)
+        
         self.conv_list = nn.ModuleList([
             nn.Conv2d(args.filter_num, args.filter_num, (args.dpcnn_step_length, 1), stride=1, bias=False)
             for _ in range(args.dpcnn_block_num)
         ])
-        # # self.max_pool = nn.MaxPool2d(kernel_size=(args.dpcnn_step_length, 1), stride=2)
-        self.relu_list = nn.ModuleList([
-            nn.ReLU()
+
+        self.lif_list = nn.ModuleList([
+            snn.Leaky(beta=args.beta, spike_grad=spike_grad, init_hidden=True, threshold=1.0)
             for _ in range(args.dpcnn_block_num)
         ])
-
         self.avg_pool = nn.AvgPool2d(kernel_size=(args.dpcnn_step_length, 1), stride=2)
         self.padding1 = nn.ZeroPad2d((0, 0, 2, 2))  # top bottom
         self.padding2 = nn.ZeroPad2d((0, 0, 0, 2))  # bottom
-
         self.fc = nn.Linear(args.filter_num, args.label_num, bias=False)
-
-        self.dropout = nn.Dropout(args.dropout_p)
         self.bn_1 = nn.BatchNorm2d(num_features=args.filter_num)
         self.bn_2 = nn.BatchNorm2d(num_features=args.filter_num)
+        self.lif_output = snn.Leaky(beta=args.beta, spike_grad=spike_grad, init_hidden=True, threshold=1.0, output=True)
 
     def forward(self, x):
         batch_size = x.shape[0]
@@ -41,37 +40,35 @@ class ANN_DPCNN(nn.Module):
         x = self.conv_region(x)
         x = self.padding1(x)
         x = self.bn_1(x)
-        x = self.relu1(x)
+        x = self.lif1(x)
 
         x = self.conv_1(x)
         x = self.padding1(x)
         x = self.bn_2(x)
-        x = self.relu2(x)
+        spks = self.lif2(x)
 
-        x = self.conv_2(x)
+        x = self.conv_2(spks)
 
         while x.size()[2] >= 2:
             x = self._block(x)
         
         x = x.view(batch_size, -1)
-        fc_input = self.dropout(x)
-        fc_output = self.fc(fc_input)
+        x = self.fc(x)
+        spk2, mem2 = self.lif_output(x)
+        
+        return spks, spk2, mem2
 
-        if self.mode == "distill":
-            return fc_input, fc_output
-
-        return fc_output
     
     def _block(self, x):
         x = self.padding2(x)
         # px = self.max_pool(x)
         px = self.avg_pool(x)
-        # self.layer_embeddings.append(px.cpu().detach().numpy())
+
         for i in range(len(self.conv_list)):
             conv = self.conv_list[i]
-            relu = self.relu_list[i]
+            lif = self.lif_list[i]
             x = self.padding1(px)
-            x = relu(x)
+            x = lif(x)
             x = conv(x)
         # # Short Cut
         # x = x + px

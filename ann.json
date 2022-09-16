@@ -12,10 +12,11 @@
         "==more==": [
             [
                 "--hidden_dim",         ["300"],
-                "--filter_num",         ["640"],
+                "--filter_num",         ["768"],
+                "--weight_decay",       ["0.001"],
+                "--optimizer_name",     ["Adamw"],
                 "--dataset_name",       ["sst2"],
                 "--sentence_length",    ["25"],
-                "--weight_decay",       ["0.001"],
                 "--batch_size",         ["32"],
                 "--learning_rate",      ["5e-4"],
                 "--epochs",             ["60"]

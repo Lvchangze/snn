@@ -63,12 +63,10 @@ from transformers import BertTokenizer
 #         fc_output = self.output_fc(x)
 #         fc_output = fc_output[:,-1,:].squeeze(1)
 #         return fc_output
-lrn = nn.LocalResponseNorm(2)
-signal_2d = torch.randn(32, 5, 24, 24)
-signal_4d = torch.randn(16, 5, 7, 7, 7, 7)
 
 
-
+t = [(1, 2), (3, 4)]
+print(t[0])
 # device_ids = [i for i in range(torch.cuda.device_count())]
 # if torch.cuda.device_count() > 1:
 #     print("\n\nLet's use", torch.cuda.device_count(), "GPUs!\n\n")

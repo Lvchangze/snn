@@ -80,9 +80,13 @@ class SNNArgs(argparse.Namespace):
         self.teacher_model_path = "saved_models/bert-base-uncased_2022-09-14 18:27:35_epoch0_0.9335529928610653"
         self.distill_loss_alpha = 0.0
         self.student_model_name = "lstm"
-        self.distill_batch = 50
+        self.distill_batch = 32
         self.distill_epoch = 30
         self.data_augment_path = f"data/{self.dataset_name}/train_augment.txt"
+
+        # dpcnn
+        self.dpcnn_block_num = 4
+        self.dpcnn_step_length = 5
 
 
     def renew_args(self):

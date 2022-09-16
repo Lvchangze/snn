@@ -407,7 +407,7 @@ def conversion(args: SNNArgs):
 
 def distill(args: SNNArgs):
     teacher_tokenizer = BertTokenizer.from_pretrained(args.teacher_model_path)
-    teacher_model = BertForSequenceClassification.from_pretrained(args.teacher_model_path, num_labels=args.label_num).to(args.device)
+    teacher_model = BertForSequenceClassification.from_pretrained(args.teacher_model_path, num_labels=args.label_num, output_hidden_states=True).to(args.device)
     for param in teacher_model.parameters():
         param.requires_grad = False
 
@@ -415,6 +415,8 @@ def distill(args: SNNArgs):
         student_model = ANN_BiLSTM(args).to(args.device)
     elif args.student_model_name == "textcnn":
         student_model = ANN_TextCNN(args).to(args.device)
+    elif args.student_model_name == "dpcnn":
+        student_model = ANN_DPCNN(args).to(args.device)
     optimizer = Adadelta(student_model.parameters() ,lr = 1.0, rho=0.95)
     teacher_data_loader = DataLoader(dataset=TxtDataset(data_path=args.data_augment_path), batch_size= args.distill_batch, shuffle=False)
     
@@ -469,7 +471,7 @@ def distill(args: SNNArgs):
     for i, batch in enumerate(teacher_data_loader):
         student_data.append(one_zero_normal(list(batch[0]), glove_dict))
     
-    output_message("Train Begins...")
+    output_message("Distill Begins...")
 
     for epoch in tqdm(range(args.distill_epoch)):
         teacher_model.eval()
@@ -477,13 +479,29 @@ def distill(args: SNNArgs):
         for i, batch in enumerate(teacher_data_loader):
             teacher_inputs = teacher_tokenizer(batch[0], padding=True, truncation=True, return_tensors="pt")
             to_device(teacher_inputs, args.device)
-            teacher_logits = teacher_model(**teacher_inputs).logits   
+            teacher_outputs = teacher_model(**teacher_inputs)
+            teacher_logits = teacher_outputs.logits
+            teacher_hidden_states = teacher_outputs.hidden_states
             student_inputs = torch.tensor(student_data[i], dtype=float).to(args.device)
-            student_logits = student_model(student_inputs)
-            loss = F.mse_loss(student_logits, teacher_logits)
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+            if args.student_model_name == "dpcnn":
+                student_hidden_states, student_logits = student_model(student_inputs)
+                # print(f"teacher_hidden_states shape:{teacher_hidden_states[-1][:, 0].shape}") # batch * 768
+                teacher_embed = teacher_hidden_states[-1][:, 0]
+                student_embed = torch.tensor(student_hidden_states, dtype=float)
+                # print(f"student_hidden_states shape:{student_hidden_states.shape}") # batch * fitter_num
+                embed_loss = F.mse_loss(student_embed, teacher_embed)
+                logit_loss = F.mse_loss(student_logits, teacher_logits)
+                loss = args.distill_loss_alpha * logit_loss + (1-args.distill_loss_alpha) * embed_loss
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+            else:
+                student_logits = student_model(student_inputs)
+                logit_loss = F.mse_loss(student_logits, teacher_logits)
+                loss = logit_loss
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
         
         saved_path = FileCreater.build_saving_file(args, description="-epoch{}".format(epoch))
         save_model_to_file(save_path=saved_path, model=student_model)
