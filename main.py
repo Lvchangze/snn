@@ -18,7 +18,7 @@ from snntorch.backprop import BPTT
 import snntorch.functional as SF
 from snntorch import spikegen
 import snntorch.surrogate as surrogate
-from model import SNN_TextCNN, ANN_TextCNN, ANN_BiLSTM, SNN_BiLSTM
+from model import SNN_TextCNN, ANN_TextCNN, ANN_BiLSTM, SNN_BiLSTM, ANN_DPCNN
 import numpy as np
 from utils.filecreater import FileCreater
 from utils.monitor import Monitor
@@ -150,6 +150,8 @@ def build_model(args: SNNArgs):
             args.model = ANN_TextCNN(args).to(args.device)
         elif args.model_type == "lstm":
             args.model = ANN_BiLSTM(args).to(args.device)
+        elif args.model_type == "dpcnn":
+            args.model = ANN_DPCNN(args).to(args.device)
     elif args.model_mode == "snn":
         if args.model_type == "textcnn":
             args.model = SNN_TextCNN(args, spike_grad=args.spike_grad).to(args.device)

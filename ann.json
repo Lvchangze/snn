@@ -6,17 +6,18 @@
         "==base==": [
             "--mode",                   ["train"],
             "--model_mode",             ["ann"],   
-            "--model_type",             ["textcnn"],
+            "--model_type",             ["dpcnn"],
             "--use_seed",               ["False"]
         ],
         "==more==": [
             [
                 "--hidden_dim",         ["300"],
+                "--filter_num",         ["640"],
                 "--dataset_name",       ["sst2"],
                 "--sentence_length",    ["25"],
                 "--weight_decay",       ["0.001"],
                 "--batch_size",         ["32"],
-                "--learning_rate",      ["5e-3"],
+                "--learning_rate",      ["5e-4"],
                 "--epochs",             ["60"]
             ]
         ]

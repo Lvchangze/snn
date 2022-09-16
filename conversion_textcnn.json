@@ -1,12 +1,12 @@
 {
     "executor": "/home/lvchangze/miniconda3/envs/snn/bin/python main.py",
-    "cuda": [3],
+    "cuda": [0],
     "concurrency": 1,
     "configs": {
         "==base==": [
             "--mode",                         ["conversion"],
             "--model_mode",                   ["snn"],
-            "--model_type",                   ["lstm"],
+            "--model_type",                   ["textcnn"],
             "--conversion_mode",              ["tune"],
             "--use_seed",                     ["False"]
         ],
@@ -15,7 +15,7 @@
                 "--hidden_dim",               ["300"],
                 "--dataset_name",             ["sst2"],
                 "--sentence_length",          ["25"],
-                "--conversion_model_path",    ["/home/lvchangze/snn/saved_models/model_modeann-modedistill-student_model_namelstm-dataset_namesst2-label_num2-distill_loss_alpha0.0-distill_batch50-distill_epoch30/2022-09-16 03:30:54.log--epoch28.pth"]
+                "--conversion_model_path",    ["/home/lvchangze/snn/saved_models/model_modeann-modedistill-student_model_nametextcnn-dataset_namesst2-label_num2-distill_loss_alpha0.0-distill_batch50-distill_epoch30/2022-09-16 01:31:55.log--epoch25.pth"]
             ]
         ]
     }

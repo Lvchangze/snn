@@ -13,7 +13,7 @@ class SNNArgs(argparse.Namespace):
         # training details
         self.mode = "conversion"  # ['train', 'attack', 'conversion', 'distill']
         self.model_mode = "ann"   # ['snn', 'ann']
-        self.model_type = 'lstm'  # ["textcnn", "lstm"]
+        self.model_type = 'lstm'  # ["textcnn", "lstm", "dpcnn"]
         
         self.dataset_name = 'sst2'
         self.label_num = 2
