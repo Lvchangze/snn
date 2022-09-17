@@ -18,7 +18,7 @@ from snntorch.backprop import BPTT
 import snntorch.functional as SF
 from snntorch import spikegen
 import snntorch.surrogate as surrogate
-from model import SNN_TextCNN, ANN_TextCNN, ANN_BiLSTM, SNN_BiLSTM, ANN_DPCNN
+from model import SNN_TextCNN, ANN_TextCNN, ANN_BiLSTM, SNN_BiLSTM, ANN_DPCNN, SNN_DPCNN
 import numpy as np
 from utils.filecreater import FileCreater
 from utils.monitor import Monitor
@@ -385,8 +385,11 @@ def conversion(args: SNNArgs):
         build_surrogate(args)
         if args.model_type == "lstm":
             args.model = SNN_BiLSTM(args, spike_grad=args.spike_grad).to(args.device)
-        else:
+        elif args.model_type == "textcnn":
             args.model = SNN_TextCNN(args, spike_grad=args.spike_grad).to(args.device)
+        elif args.model_type == "dpcnn":
+            args.model = SNN_DPCNN(args, spike_grad=args.spike_grad).to(args.device)
+        
         build_dataset(args=args, split='test')
         build_rated_dataset(args, split='test')
         build_dataloader(args=args, dataset=args.test_rated_dataset, split='test')
@@ -395,8 +398,23 @@ def conversion(args: SNNArgs):
         args.model.load_state_dict(saved_weights, strict=False)
 
         if args.conversion_normalize_type == "model_base":
+            for key in saved_weights.keys():
+                # default: fc is output layer
+                if str(key).endswith("weight") and (not str(key).startswith("fc")) and (not str(key).startswith("output")):
+                    max_input_wt = torch.max(saved_weights[key])
+                    print(max_input_wt)
+                    if max_input_wt > 0.0:
+                        saved_weights[key] = saved_weights[key] / max_input_wt
             args.model.load_state_dict(saved_weights, strict=False)
         elif args.conversion_normalize_type == "data_base":
+            output_layer_factor = 1.19
+            convs_layer_factor = 1.0021
+            for key in saved_weights.keys():
+                if str(key).endswith("weight") and (not str(key).startswith("fc")) and (not str(key).startswith("output")):
+                    max_input_wt = torch.max(saved_weights[key])
+                    print(max_input_wt)
+                    if max_input_wt > 0.0:
+                        saved_weights[key] = saved_weights[key] / max_input_wt
             args.model.load_state_dict(saved_weights, strict=False)
 
         acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=args.label_num)
@@ -482,12 +500,12 @@ def distill(args: SNNArgs):
             teacher_outputs = teacher_model(**teacher_inputs)
             teacher_logits = teacher_outputs.logits
             teacher_hidden_states = teacher_outputs.hidden_states
-            student_inputs = torch.tensor(student_data[i], dtype=float).to(args.device)
+            student_inputs = torch.tensor(np.array(student_data[i], dtype=float), dtype=float).to(args.device)
             if args.student_model_name == "dpcnn":
                 student_hidden_states, student_logits = student_model(student_inputs)
                 # print(f"teacher_hidden_states shape:{teacher_hidden_states[-1][:, 0].shape}") # batch * 768
                 teacher_embed = teacher_hidden_states[-1][:, 0]
-                student_embed = torch.tensor(student_hidden_states, dtype=float)
+                student_embed = student_hidden_states
                 # print(f"student_hidden_states shape:{student_hidden_states.shape}") # batch * fitter_num
                 embed_loss = F.mse_loss(student_embed, teacher_embed)
                 logit_loss = F.mse_loss(student_logits, teacher_logits)
@@ -512,7 +530,10 @@ def distill(args: SNNArgs):
             for data, y_batch in args.test_dataloader:
                 data = data.to(args.device)
                 y_batch = y_batch.to(args.device)
-                output = student_model(data)
+                if args.student_model_name == "dpcnn":
+                    _, output = student_model(data)
+                else:
+                    output = student_model(data)
                 correct += int(y_batch.eq(torch.max(output,1)[1]).sum())
         output_message(f"Epoch {epoch} Acc: {float(correct/len(test_dataset))}")
     pass

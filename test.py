@@ -39,8 +39,12 @@ from transformers import BertTokenizer
 
 # model  = TextCNN()
 # model = model.load_state_dict(torch.load("saved_models/conversion.pth"))
-# path = "/home/lvchangze/snn/saved_models/model_modeann-modetrain-dataset_namesst2-sentence_length25-dropout_p0.5-weight_decay0.001-batch_size32-learning_rate0.0005/2022-09-13 16:25:08.log--epoch29.pth"
-# print(torch.load(path))
+
+path = "/home/lvchangze/snn/saved_models/model_modeann-modedistill-student_model_namedpcnn-dataset_namesst2-label_num2-distill_loss_alpha0.3-distill_batch32-distill_epoch30/2022-09-17 14:01:18.log--epoch11.pth"
+saved_weights = torch.load(path)
+print(saved_weights.keys())
+
+
 
 # with open("data/sst2/test_u_3v_sst2_glove100d_sent_len25.tensor_dataset", 'rb') as f:
 #     dataset = pickle.load(f)
@@ -64,9 +68,6 @@ from transformers import BertTokenizer
 #         fc_output = fc_output[:,-1,:].squeeze(1)
 #         return fc_output
 
-
-t = [(1, 2), (3, 4)]
-print(t[0])
 # device_ids = [i for i in range(torch.cuda.device_count())]
 # if torch.cuda.device_count() > 1:
 #     print("\n\nLet's use", torch.cuda.device_count(), "GPUs!\n\n")
