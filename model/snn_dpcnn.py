@@ -9,7 +9,7 @@ class SNN_DPCNN(nn.Module):
         super().__init__()
         self.label_num = args.label_num
         self.mode = args.mode
-        self.conv_region = nn.Conv2d(1, args.filter_num, (3, args.hidden_dim), stride=1, bias=False)
+        self.conv_region = nn.Conv2d(1, args.filter_num, (args.dpcnn_step_length, args.hidden_dim), stride=1, bias=False)
         self.conv_1 = nn.Conv2d(args.filter_num, args.filter_num, (args.dpcnn_step_length, 1), stride=1, bias=False)
         self.lif1 = snn.Leaky(beta=args.beta, spike_grad=spike_grad, init_hidden=True, threshold=1.0)
         self.conv_2 = nn.Conv2d(args.filter_num, args.filter_num, (args.dpcnn_step_length, 1), stride=1, bias=False)
@@ -60,16 +60,16 @@ class SNN_DPCNN(nn.Module):
 
     
     def _block(self, x):
-        x = self.padding2(x)
+        x = self.padding2(x)              # padding前：32 * 768 * 21 * 1，padding后：32 * 768 * 23 * 1
         # px = self.max_pool(x)
-        px = self.avg_pool(x)
+        px = self.avg_pool(x)             # pool后：32 * 768 * 10 * 1
 
         for i in range(len(self.conv_list)):
             conv = self.conv_list[i]
             lif = self.lif_list[i]
             x = self.padding1(px)
-            x = lif(x)
-            x = conv(x)
+            x = lif(x)                    # 第一轮，32 * 768 * 14 * 1
+            x = conv(x)                   # x第一轮变为 32 * 768 * 10 * 1
         # # Short Cut
         # x = x + px
         return x

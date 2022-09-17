@@ -1,0 +1,30 @@
+{
+    "executor": "/home/lvchangze/miniconda3/envs/snn/bin/python main.py",
+    "cuda": [2,3],
+    "concurrency": 2,
+    "configs": {
+        "==base==": [
+            "--mode",                   ["train"],
+            "--model_mode",             ["snn"],
+            "--dataset_name",           ["sst2"],
+            "--use_seed",               ["False"]
+        ],
+        "==more==": [
+            [
+                "--positive_init_rate", ["0.55"],
+                "--num_steps",          ["50"],
+                "--learning_rate",      ["5e-4"],
+                "--beta",               ["0.95"],
+                "--epochs",             ["50"]
+            ],
+            [
+                "--positive_init_rate", ["0.55"],
+                "--num_steps",          ["50"],
+                "--learning_rate",      ["1e-4"],
+                "--label_num",          ["100"],
+                "--beta",               ["0.95"],
+                "--epochs",             ["50"]
+            ]
+        ]
+    }
+}

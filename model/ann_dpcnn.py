@@ -64,15 +64,11 @@ class ANN_DPCNN(nn.Module):
     
     def _block(self, x):
         x = self.padding2(x)
-        # px = self.max_pool(x)
-        px = self.avg_pool(x)
-        # self.layer_embeddings.append(px.cpu().detach().numpy())
+        x = self.avg_pool(x)
         for i in range(len(self.conv_list)):
             conv = self.conv_list[i]
             relu = self.relu_list[i]
-            x = self.padding1(px)
+            x = self.padding1(x)
             x = relu(x)
             x = conv(x)
-        # # Short Cut
-        # x = x + px
         return x

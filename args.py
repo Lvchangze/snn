@@ -12,8 +12,8 @@ class SNNArgs(argparse.Namespace):
 
         # training details
         self.mode = "conversion"  # ['train', 'attack', 'conversion', 'distill']
-        self.model_mode = "ann"   # ['snn', 'ann']
-        self.model_type = 'lstm'  # ["textcnn", "lstm", "dpcnn"]
+        self.model_mode = "snn"   # ['snn', 'ann']
+        self.model_type = 'dpcnn'  # ["textcnn", "lstm", "dpcnn"]
         
         self.dataset_name = 'sst2'
         self.label_num = 2
@@ -22,7 +22,7 @@ class SNNArgs(argparse.Namespace):
         self.epochs = 50
         self.batch_size = 32
         self.sentence_length = 25
-        self.hidden_dim = 100
+        self.hidden_dim = 300
         self.num_steps = 50
         self.hidden_layer_num = 200  # hidden_layer_neuron_number
         self.loss = 'ce_rate'
@@ -58,7 +58,7 @@ class SNNArgs(argparse.Namespace):
         self.surrogate = 'fast_sigmoid'
         self.beta = 1.0
         self.filters = [3,4,5]
-        self.filter_num = 100
+        self.filter_num = 768
         self.initial_method = 'zero' # ['zero', 'normal', 'kaiming', 'xavier', 'k+n', 'k+x']
         self.positive_init_rate = 0.55
 
@@ -66,7 +66,7 @@ class SNNArgs(argparse.Namespace):
         self.dead_neuron_checker = "False"
 
         # conversion
-        self.conversion_model_path = "saved_models/conversion.pth"
+        self.conversion_model_path = "saved_models/2022-09-17 14:01:18.log--epoch11.pth"
         self.conversion_mode = "normalize"              # ["tune", "normalize"]
         self.conversion_normalize_type = "model_base"   # ["model_base", "data_base"]
 

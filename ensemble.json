@@ -1,0 +1,21 @@
+{
+    "executor": "python main.py",
+    "cuda": [0,1],
+    "concurrency": 2,
+    "configs": {
+        "==base==": [
+        ],
+        "==more==": [
+            [
+                "--loss",               ["ce_rate"], 
+                "--ensemble",           ["True"],
+                "--label_num",          ["200"],
+                "--positive_init_rate", ["0.55"],
+                "--num_steps",          ["50"],
+                "--learning_rate",      ["1e-4"],
+                "--beta",               ["0.95"],
+                "--epochs",             ["200","400"]
+            ]
+        ]
+    }
+}

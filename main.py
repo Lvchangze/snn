@@ -158,6 +158,8 @@ def build_model(args: SNNArgs):
             args.model.initial()
         elif args.model_type == "lstm":
             args.model = SNN_BiLSTM(args, spike_grad=args.spike_grad).to(args.device)
+        elif args.model_type == "dpcnn":
+            args.model = SNN_DPCNN(args, spike_grad=args.spike_grad).to(args.device)
     print(args.model)
     return
 
@@ -202,6 +204,8 @@ def predict_accuracy(args, dataloader, model, num_steps, population_code=False, 
     return acc/total
 
 def train(args):
+    build_surrogate(args=args)
+    build_model(args)
     build_dataset(args=args)
     build_dataset(args=args, split='test')
     if args.use_codebook == 'False':
@@ -214,8 +218,6 @@ def train(args):
         build_dataloader(args=args, dataset=args.train_codebooked_dataset)
         build_codebooked_dataset(args, split='test')
         build_dataloader(args=args, dataset=args.test_codebooked_dataset, split='test')    
-    build_surrogate(args=args)
-    build_model(args)
 
     if args.mode == "conversion":
         args.model.load_state_dict(torch.load(args.conversion_model_path), strict=False)
@@ -397,6 +399,9 @@ def conversion(args: SNNArgs):
         saved_weights = torch.load(args.conversion_model_path)
         args.model.load_state_dict(saved_weights, strict=False)
 
+        acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=args.label_num)
+        output_message("Test acc of conversioned {} without normalize is: {}".format(args.model_type, acc))
+
         if args.conversion_normalize_type == "model_base":
             for key in saved_weights.keys():
                 # default: fc is output layer
@@ -417,7 +422,7 @@ def conversion(args: SNNArgs):
             args.model.load_state_dict(saved_weights, strict=False)
 
         acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=args.label_num)
-        output_message("Test acc of conversioned {} is: {}".format(args.model_type, acc))
+        output_message("Test acc of conversioned {} after normalize is: {}".format(args.model_type, acc))
     elif args.conversion_mode == "tune":
         train(args)
     pass
