@@ -60,16 +60,12 @@ class SNN_DPCNN(nn.Module):
 
     
     def _block(self, x):
-        x = self.padding2(x)              # padding前：32 * 768 * 21 * 1，padding后：32 * 768 * 23 * 1
-        # px = self.max_pool(x)
-        px = self.avg_pool(x)             # pool后：32 * 768 * 10 * 1
-
+        x = self.padding2(x)
+        x = self.avg_pool(x)
         for i in range(len(self.conv_list)):
             conv = self.conv_list[i]
             lif = self.lif_list[i]
-            x = self.padding1(px)
-            x = lif(x)                    # 第一轮，32 * 768 * 14 * 1
-            x = conv(x)                   # x第一轮变为 32 * 768 * 10 * 1
-        # # Short Cut
-        # x = x + px
+            x = self.padding1(x)
+            x = lif(x)
+            x = conv(x)
         return x
