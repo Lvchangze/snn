@@ -402,7 +402,6 @@ def conversion(args: SNNArgs):
                 # default: fc is output layer
                 if str(key).endswith("weight") and (not str(key).startswith("fc")) and (not str(key).startswith("output")):
                     max_input_wt = torch.max(saved_weights[key])
-                    print(max_input_wt)
                     if max_input_wt > 0.0:
                         saved_weights[key] = saved_weights[key] / max_input_wt
             args.model.load_state_dict(saved_weights, strict=False)
@@ -410,11 +409,11 @@ def conversion(args: SNNArgs):
             output_layer_factor = 1.19
             convs_layer_factor = 1.0021
             for key in saved_weights.keys():
-                if str(key).endswith("weight") and (not str(key).startswith("fc")) and (not str(key).startswith("output")):
-                    max_input_wt = torch.max(saved_weights[key])
-                    print(max_input_wt)
-                    if max_input_wt > 0.0:
-                        saved_weights[key] = saved_weights[key] / max_input_wt
+                # default: fc is output layer
+                if str(key).startswith("fc") or str(key).startswith("output"):
+                    saved_weights[key] = saved_weights[key] / output_layer_factor
+                elif str(key).endswith("weight"):
+                    saved_weights[key] = saved_weights[key] / convs_layer_factor
             args.model.load_state_dict(saved_weights, strict=False)
 
         acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=args.label_num)
