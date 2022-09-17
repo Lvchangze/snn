@@ -66,7 +66,7 @@ class SNNArgs(argparse.Namespace):
         self.dead_neuron_checker = "False"
 
         # conversion
-        self.conversion_model_path = "saved_models/2022-09-17 14:01:18.log--epoch11.pth"
+        self.conversion_model_path = "saved_models/2022-09-17 22:53:22.log--epoch4.pth"
         self.conversion_mode = "normalize"              # ["tune", "normalize"]
         self.conversion_normalize_type = "model_base"   # ["model_base", "data_base"]
 
@@ -85,7 +85,7 @@ class SNNArgs(argparse.Namespace):
         self.data_augment_path = f"data/{self.dataset_name}/train_augment.txt"
 
         # dpcnn
-        self.dpcnn_block_num = 4
+        self.dpcnn_block_num = 2
         self.dpcnn_step_length = 5
 
 

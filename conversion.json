@@ -7,7 +7,7 @@
             "--mode",                         ["conversion"],
             "--model_mode",                   ["snn"],
             "--model_type",                   ["dpcnn"],
-            "--conversion_mode",              ["tune"],
+            "--conversion_mode",              ["normalize"],
             "--use_seed",                     ["False"]
         ],
         "==more==": [
@@ -16,7 +16,7 @@
                 "--hidden_dim",               ["300"],
                 "--dataset_name",             ["sst2"],
                 "--sentence_length",          ["25"],
-                "--conversion_model_path",    ["saved_models/2022-09-17 14:01:18.log--epoch11.pth"]
+                "--conversion_model_path",    ["saved_models/2022-09-17 22:53:22.log--epoch4.pth"]
             ]
         ]
     }
