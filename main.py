@@ -50,6 +50,9 @@ def build_dataset(args: SNNArgs, split='train'):
     elif split == 'test':
         with open(args.test_data_path, 'rb') as f:
             args.test_dataset = pickle.load(f)
+    elif split == 'dev':
+        with open(args.dev_data_path, 'rb') as f:
+            args.dev_dataset = pickle.load(f)
     return
 
 def build_rated_dataset(args: SNNArgs, split='train'):
@@ -81,6 +84,9 @@ def build_codebooked_dataset(args: SNNArgs, split='train'):
     elif split == 'test':
         assert hasattr(args, 'test_dataset')
         dataset = args.test_dataset
+    elif split == 'dev':
+        assert hasattr(args, 'dev_dataset')
+        dataset = args.dev_dataset
     codebooked_data = []
     encoder = GreenEncoder(args)
     encoder.write_codebook()
@@ -208,16 +214,21 @@ def train(args):
     build_model(args)
     build_dataset(args=args)
     build_dataset(args=args, split='test')
+    build_dataset(args=args, split='dev')
     if args.use_codebook == 'False':
         build_rated_dataset(args)
         build_dataloader(args=args, dataset=args.train_rated_dataset)
         build_rated_dataset(args, split='test')
         build_dataloader(args=args, dataset=args.test_rated_dataset, split='test')
+        build_rated_dataset(args, split='dev')
+        build_dataloader(args=args, dataset=args.test_rated_dataset, split='dev')
     else:
         build_codebooked_dataset(args=args)
         build_dataloader(args=args, dataset=args.train_codebooked_dataset)
         build_codebooked_dataset(args, split='test')
-        build_dataloader(args=args, dataset=args.test_codebooked_dataset, split='test')    
+        build_dataloader(args=args, dataset=args.test_codebooked_dataset, split='test')
+        build_codebooked_dataset(args, split='dev')
+        build_dataloader(args=args, dataset=args.test_codebooked_dataset, split='dev')    
 
     if args.mode == "conversion":
         args.model.load_state_dict(torch.load(args.conversion_model_path), strict=False)
@@ -245,12 +256,14 @@ def train(args):
         save_model_to_file(save_path=saved_path, model=args.model)
         acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=args.label_num)
         output_message("Test acc in epoch {} is: {}".format(epoch, acc))
+        dev_acc = predict_accuracy(args, args.dev_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=args.label_num)
+        output_message("Dev acc in epoch {} is: {}".format(epoch, dev_acc))
         acc_list.append(acc)
         if args.dead_neuron_checker == "True":
             Monitor.print_results_by_epoch(epoch)
     output_message("Mean Dead_neuron_rate: {}".format(np.mean(dead_neuron_rate_list)))
     output_message("Mean Too_Activate_neuron_rate: {}".format(np.mean(too_activate_neuron_rate_list)))
-    output_message("Best Acc: {}".format(np.max(acc_list)))
+    output_message("Best Test Acc: {}".format(np.max(acc_list)))
     return
 
 def attack(args: SNNArgs):
@@ -345,15 +358,18 @@ def ann_train(args: SNNArgs):
     
     build_dataset(args=args)
     build_dataset(args=args, split='test')
+    build_dataset(args=args, split='dev')
     build_dataloader(args=args, dataset=args.train_dataset)
     build_dataloader(args=args, dataset=args.test_dataset, split='test')
+    build_dataloader(args=args, dataset=args.test_dataset, split='dev')
 
     build_model(args)
     build_optimizer(args)
     build_criterion(args)
 
     # build_dataloader(args=args, dataset=get_tensor_dataset("data/sst2/train.txt"))
-    test_dataset = get_tensor_dataset(f"data/{args.dataset_name}/test.txt")
+    test_dataset = args.test_dataset
+    dev_dataset = args.dev_dataset
     # build_dataloader(args=args, dataset=test_dataset, split='test')
 
     acc_list = []
@@ -377,10 +393,17 @@ def ann_train(args: SNNArgs):
                 y_batch = y_batch.to(args.device)
                 output = args.model(data)
                 correct += int(y_batch.eq(torch.max(output,1)[1]).sum())
+                output_message(f"Epoch {epoch} Acc: {float(correct/len(test_dataset))}")
+
+            correct = 0
+            for data, y_batch in args.dev_dataloader:
+                data = data.to(args.device)
+                y_batch = y_batch.to(args.device)
+                output = args.model(data)
+                correct += int(y_batch.eq(torch.max(output,1)[1]).sum())
+                output_message(f"Epoch {epoch} Acc: {float(correct/len(dev_dataset))}")
         acc_list.append(float(correct/len(test_dataset)))
-        output_message(f"Epoch {epoch} Acc: {float(correct/len(test_dataset))}")
-    output_message(np.max(acc_list))
-    pass
+    output_message(f"Best Test Acc: {np.max(acc_list)}")
 
 def conversion(args: SNNArgs):
     if args.conversion_mode == "normalize":
@@ -444,7 +467,10 @@ def distill(args: SNNArgs):
     
     build_dataset(args=args, split='test')
     build_dataloader(args=args, dataset=args.test_dataset, split='test')
+    build_dataset(args=args, split='dev')
+    build_dataloader(args=args, dataset=args.test_dataset, split='dev')
     test_dataset = args.test_dataset
+    dev_dataset = args.dev_dataset
 
     def to_device(x, device):
         for key in x:
@@ -539,7 +565,18 @@ def distill(args: SNNArgs):
                 else:
                     output = student_model(data)
                 correct += int(y_batch.eq(torch.max(output,1)[1]).sum())
-        output_message(f"Epoch {epoch} Acc: {float(correct/len(test_dataset))}")
+            output_message(f"Epoch {epoch} Acc: {float(correct/len(test_dataset))}")
+
+            correct = 0
+            for data, y_batch in args.dev_dataloader:
+                data = data.to(args.device)
+                y_batch = y_batch.to(args.device)
+                if args.student_model_name == "dpcnn":
+                    _, output = student_model(data)
+                else:
+                    output = student_model(data)
+                correct += int(y_batch.eq(torch.max(output,1)[1]).sum())
+            output_message(f"Epoch {epoch} Acc: {float(correct/len(dev_dataset))}")
     pass
 
 if __name__ == "__main__":

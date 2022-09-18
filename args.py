@@ -47,6 +47,7 @@ class SNNArgs(argparse.Namespace):
         # please modify the renew function together
         self.data_path = f"data/{self.dataset_name}/train_u_3v_{self.dataset_name}_glove{self.hidden_dim}d_sent_len{self.sentence_length}.tensor_dataset"
         self.test_data_path = f"data/{self.dataset_name}/test_u_3v_{self.dataset_name}_glove{self.hidden_dim}d_sent_len{self.sentence_length}.tensor_dataset"
+        self.dev_data_path = f"data/{self.dataset_name}/dev_u_3v_{self.dataset_name}_glove{self.hidden_dim}d_sent_len{self.sentence_length}.tensor_dataset"
         self.workspace = '/home/lvchangze/snn'
         self.data_dir = os.path.join(self.workspace, "data", self.dataset_name)
         self.logging_dir = os.path.join(self.workspace, 'logs')
@@ -108,6 +109,7 @@ class SNNArgs(argparse.Namespace):
         self.vocab_path = os.path.join(self.workspace, f"data/glove.6B.{self.hidden_dim}d.txt")
         self.data_path = f"data/{self.dataset_name}/train_u_3v_{self.dataset_name}_glove{self.hidden_dim}d_sent_len{self.sentence_length}.tensor_dataset"
         self.test_data_path = f"data/{self.dataset_name}/test_u_3v_{self.dataset_name}_glove{self.hidden_dim}d_sent_len{self.sentence_length}.tensor_dataset"
+        self.dev_data_path= f"data/{self.dataset_name}/dev_u_3v_{self.dataset_name}_glove{self.hidden_dim}d_sent_len{self.sentence_length}.tensor_dataset"
         self.data_augment_path = f"data/{self.dataset_name}/train_augment.txt"
 
     @staticmethod

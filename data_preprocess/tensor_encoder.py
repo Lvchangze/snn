@@ -103,8 +103,8 @@ if __name__ == "__main__":
     tensor_encoder = TensorEncoder(
         vocab_path="../data/glove.6B.300d.txt",
         dataset_name="sst2",
-        data_type="test",
-        datafile_path="../data/sst2/test.txt",
+        data_type="dev",
+        datafile_path="../data/sst2/dev.txt",
         sent_length=25,
         embedding_dim=300,
         bias = 3

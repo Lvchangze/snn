@@ -1,7 +1,7 @@
 {
     "executor": "/home/lvchangze/miniconda3/envs/snn/bin/python main.py",
-    "cuda": [1,2,3],
-    "concurrency": 3,
+    "cuda": [0,1,2,3],
+    "concurrency": 4,
     "configs": {
         "==base==": [
             "--mode",                         ["distill"],
@@ -12,7 +12,7 @@
         ],
         "==more==": [
             [
-                "--distill_loss_alpha",       ["0.3", "0.4", "0.6"],
+                "--distill_loss_alpha",       ["0.3", "0.4", "0.5", "0.6"],
                 "--filter_num",               ["768"]
             ]
         ]
