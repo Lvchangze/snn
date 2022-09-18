@@ -221,14 +221,14 @@ def train(args):
         build_rated_dataset(args, split='test')
         build_dataloader(args=args, dataset=args.test_rated_dataset, split='test')
         build_rated_dataset(args, split='dev')
-        build_dataloader(args=args, dataset=args.test_rated_dataset, split='dev')
+        build_dataloader(args=args, dataset=args.dev_rated_dataset, split='dev')
     else:
         build_codebooked_dataset(args=args)
         build_dataloader(args=args, dataset=args.train_codebooked_dataset)
         build_codebooked_dataset(args, split='test')
         build_dataloader(args=args, dataset=args.test_codebooked_dataset, split='test')
         build_codebooked_dataset(args, split='dev')
-        build_dataloader(args=args, dataset=args.test_codebooked_dataset, split='dev')    
+        build_dataloader(args=args, dataset=args.dev_codebooked_dataset, split='dev')    
 
     if args.mode == "conversion":
         args.model.load_state_dict(torch.load(args.conversion_model_path), strict=False)
@@ -361,7 +361,7 @@ def ann_train(args: SNNArgs):
     build_dataset(args=args, split='dev')
     build_dataloader(args=args, dataset=args.train_dataset)
     build_dataloader(args=args, dataset=args.test_dataset, split='test')
-    build_dataloader(args=args, dataset=args.test_dataset, split='dev')
+    build_dataloader(args=args, dataset=args.dev_dataset, split='dev')
 
     build_model(args)
     build_optimizer(args)
@@ -468,7 +468,7 @@ def distill(args: SNNArgs):
     build_dataset(args=args, split='test')
     build_dataloader(args=args, dataset=args.test_dataset, split='test')
     build_dataset(args=args, split='dev')
-    build_dataloader(args=args, dataset=args.test_dataset, split='dev')
+    build_dataloader(args=args, dataset=args.dev_dataset, split='dev')
     test_dataset = args.test_dataset
     dev_dataset = args.dev_dataset
 
@@ -567,7 +567,7 @@ def distill(args: SNNArgs):
                 correct += int(y_batch.eq(torch.max(output,1)[1]).sum())
             output_message(f"Epoch {epoch} Acc: {float(correct/len(test_dataset))}")
 
-            correct = 0
+            dev_correct = 0
             for data, y_batch in args.dev_dataloader:
                 data = data.to(args.device)
                 y_batch = y_batch.to(args.device)
@@ -575,9 +575,9 @@ def distill(args: SNNArgs):
                     _, output = student_model(data)
                 else:
                     output = student_model(data)
-                correct += int(y_batch.eq(torch.max(output,1)[1]).sum())
-            output_message(f"Epoch {epoch} Acc: {float(correct/len(dev_dataset))}")
-    pass
+                dev_correct += int(y_batch.eq(torch.max(output,1)[1]).sum())
+            output_message(f"Epoch {epoch} Acc: {float(dev_correct/len(dev_dataset))}")
+
 
 if __name__ == "__main__":
     args = SNNArgs.parse()
