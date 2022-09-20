@@ -1,7 +1,7 @@
 {
     "executor": "/home/lvchangze/miniconda3/envs/snn/bin/python main.py",
-    "cuda": [0],
-    "concurrency": 1,
+    "cuda": [1, 2, 3],
+    "concurrency": 3,
     "configs": {
         "==base==": [
             "--mode",                         ["conversion"],
@@ -12,10 +12,28 @@
         ],
         "==more==": [
             [
+                "--filter_num",               ["100"],
                 "--hidden_dim",               ["300"],
-                "--dataset_name",             ["sst2"],
+                "--dataset_name",             ["sst5"],
+                "--label_num",                ["5"],
                 "--sentence_length",          ["25"],
-                "--conversion_model_path",    ["/home/lvchangze/snn/saved_models/model_modeann-modedistill-student_model_nametextcnn-dataset_namesst2-label_num2-distill_loss_alpha0.0-distill_batch50-distill_epoch30/2022-09-16 01:31:55.log--epoch25.pth"]
+                "--conversion_model_path",    ["/home/lvchangze/snn/saved_models/model_modeann-modetrain-model_typetextcnn-dataset_namesst5-sentence_length25-dropout_p0.0-weight_decay0.0-batch_size32-learning_rate0.0005/2022-09-19 12:44:15.log--epoch347.pth"]
+            ],
+            [
+                "--filter_num",               ["100"],
+                "--hidden_dim",               ["300"],
+                "--dataset_name",             ["mr"],
+                "--label_num",                ["2"],
+                "--sentence_length",          ["35"],
+                "--conversion_model_path",    ["/home/lvchangze/snn/saved_models/model_modeann-modetrain-model_typetextcnn-dataset_namemr-sentence_length35-dropout_p0.0-weight_decay0.0-batch_size32-learning_rate0.0001/2022-09-19 11:46:32.log--epoch118.pth"]
+            ],
+            [
+                "--filter_num",               ["100"],
+                "--hidden_dim",               ["300"],
+                "--dataset_name",             ["subj"],
+                "--label_num",                ["2"],
+                "--sentence_length",          ["35"],
+                "--conversion_model_path",    ["/home/lvchangze/snn/saved_models/model_modeann-modetrain-model_typetextcnn-dataset_namesubj-sentence_length35-dropout_p0.3-weight_decay0.001-batch_size32-learning_rate0.0005/2022-09-19 12:03:05.log--epoch175.pth"]
             ]
         ]
     }

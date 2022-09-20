@@ -32,7 +32,8 @@ class ANN_TextCNN(nn.Module):
         # conv_out = [self.relu_1(i) for i in conv_out]
         # pooled_out = [self.maxpool_1[i](conv_out[i]) for i in range(len(self.maxpool_1))]
         pooled_out = [self.avgpool_1[i](conv_out[i]) for i in range(len(self.avgpool_1))]
-        pooled_out = [self.drop(self.relu_2(pool)) for pool in pooled_out]
+        pooled_out = [self.relu_2(pool) for pool in pooled_out]
         flatten = torch.cat(pooled_out, dim=1).view(batch_size, -1)
+        flatten = self.drop(flatten)
         fc_output = self.fc_1(flatten)
         return fc_output

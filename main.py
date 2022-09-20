@@ -63,6 +63,9 @@ def build_rated_dataset(args: SNNArgs, split='train'):
     elif split == 'test':
         assert hasattr(args, 'test_dataset')
         dataset = args.test_dataset
+    elif split == 'dev':
+        assert hasattr(args, 'dev_dataset')
+        dataset = args.dev_dataset
     rated_data = []
     for i in range(len(dataset)):
         item = dataset[i]
@@ -175,6 +178,8 @@ def build_optimizer(args: SNNArgs):
         args.optimizer = AdamW(args.model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay, betas=(0.9, 0.999))
     elif args.optimizer_name == "SGD":
         args.optimizer = SGD(args.model.parameters(), lr=args.learning_rate, momentum=0.9, weight_decay=args.weight_decay)
+    elif args.optimizer_name == "Adadelta":
+        args.optimizer = Adadelta(args.model.parameters() ,lr = 1.0, rho=0.95, weight_decay=args.weight_decay)
     return
 
 def predict_accuracy(args, dataloader, model, num_steps, population_code=False, num_classes=False):
@@ -383,8 +388,6 @@ def ann_train(args: SNNArgs):
             args.optimizer.zero_grad()
             loss.backward()
             args.optimizer.step()
-        saved_path = FileCreater.build_saving_file(args, description="-epoch{}".format(epoch))
-        save_model_to_file(save_path=saved_path, model=args.model)
         args.model.eval()
         with torch.no_grad():
             correct = 0
@@ -393,16 +396,19 @@ def ann_train(args: SNNArgs):
                 y_batch = y_batch.to(args.device)
                 output = args.model(data)
                 correct += int(y_batch.eq(torch.max(output,1)[1]).sum())
-                output_message(f"Epoch {epoch} Acc: {float(correct/len(test_dataset))}")
-
+            output_message(f"Epoch {epoch} Acc: {float(correct/len(test_dataset))}")
+            acc_list.append(float(correct/len(test_dataset)))
+            if float(correct/len(test_dataset)) >= np.max(acc_list):
+                saved_path = FileCreater.build_saving_file(args, description="-epoch{}".format(epoch))
+                save_model_to_file(save_path=saved_path, model=args.model)
             correct = 0
             for data, y_batch in args.dev_dataloader:
                 data = data.to(args.device)
                 y_batch = y_batch.to(args.device)
                 output = args.model(data)
                 correct += int(y_batch.eq(torch.max(output,1)[1]).sum())
-                output_message(f"Epoch {epoch} Acc: {float(correct/len(dev_dataset))}")
-        acc_list.append(float(correct/len(test_dataset)))
+            output_message(f"Epoch {epoch} Acc: {float(correct/len(dev_dataset))}")
+        
     output_message(f"Best Test Acc: {np.max(acc_list)}")
 
 def conversion(args: SNNArgs):

@@ -102,10 +102,10 @@ class TensorEncoder():
 if __name__ == "__main__":
     tensor_encoder = TensorEncoder(
         vocab_path="../data/glove.6B.300d.txt",
-        dataset_name="sst2",
+        dataset_name="imdb",
         data_type="dev",
-        datafile_path="../data/sst2/dev.txt",
-        sent_length=25,
+        datafile_path="../data/imdb/dev.txt",
+        sent_length=256,
         embedding_dim=300,
         bias = 3
     )

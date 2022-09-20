@@ -40,37 +40,37 @@ from transformers import BertTokenizer
 # model  = TextCNN()
 # model = model.load_state_dict(torch.load("saved_models/conversion.pth"))
 
-path = "/home/lvchangze/snn/saved_models/model_modeann-modedistill-student_model_namedpcnn-dataset_namesst2-label_num2-distill_loss_alpha0.3-distill_batch32-distill_epoch30/2022-09-17 14:01:18.log--epoch11.pth"
-saved_weights = torch.load(path)
-print(saved_weights.keys())
-
+# path = "/home/lvchangze/snn/saved_models/model_modeann-modedistill-student_model_namedpcnn-dataset_namesst2-label_num2-distill_loss_alpha0.3-distill_batch32-distill_epoch30/2022-09-17 14:01:18.log--epoch11.pth"
+# saved_weights = torch.load(path)
+# print(saved_weights.keys())
 
 
 # with open("data/sst2/test_u_3v_sst2_glove100d_sent_len25.tensor_dataset", 'rb') as f:
 #     dataset = pickle.load(f)
 #     print(dataset[1])
 
-
-# class BiLSTM(nn.Module):
-#     def __init__(self) -> None:
-#         super(BiLSTM, self).__init__()
-#         self.lstm = nn.LSTM(batch_first=True, input_size=100, hidden_size=150, num_layers=1, bidirectional=True, bias=False)
-#         self.fc_1 = nn.Linear(150 * 2, 200, bias=False)
-#         self.relu = nn.ReLU()
-#         self.output_fc = nn.Linear(200, 2, bias=False)
-
-#     def forward(self, x):
-#         print(x.shape)
-#         output, (hidden,cell) = self.lstm(x)
-#         x = self.fc_1(output)
-#         x = self.relu(x)
-#         fc_output = self.output_fc(x)
-#         fc_output = fc_output[:,-1,:].squeeze(1)
-#         return fc_output
-
-# device_ids = [i for i in range(torch.cuda.device_count())]
-# if torch.cuda.device_count() > 1:
-#     print("\n\nLet's use", torch.cuda.device_count(), "GPUs!\n\n")
-# if len(device_ids) > 1:
-#     model = nn.DataParallel(model, device_ids=device_ids)
-
+def get_samples_from_text(datafile_path):
+    sample_list = []
+    with open(datafile_path, "r") as f:
+        for line in f.readlines():
+            temp = line.split('\t')
+            sentence = temp[0].strip()
+            label = int(temp[1])
+            sample_list.append((sentence, label))
+    return sample_list
+dataset_name = "subj"
+samples = get_samples_from_text(f"data/{dataset_name}/all.txt")
+length = len(samples)
+random.shuffle(samples)
+train_samples = samples[:int(length * 0.85)]
+dev_samples = samples[int(length * 0.85):int(length * 0.9)]
+test_samples = samples[int(length * 0.9):]
+with open(f"data/{dataset_name}/train.txt", "w", encoding="utf-8")as f:
+    for sample in train_samples:
+        f.write(sample[0] + "\t" +str(sample[1])+"\n")
+with open(f"data/{dataset_name}/dev.txt", "w", encoding="utf-8")as f:
+    for sample in dev_samples:
+        f.write(sample[0] + "\t" +str(sample[1])+"\n")
+with open(f"data/{dataset_name}/test.txt", "w", encoding="utf-8")as f:
+    for sample in test_samples:
+        f.write(sample[0] + "\t" +str(sample[1])+"\n")

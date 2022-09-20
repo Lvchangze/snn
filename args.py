@@ -59,7 +59,7 @@ class SNNArgs(argparse.Namespace):
         self.surrogate = 'fast_sigmoid'
         self.beta = 1.0
         self.filters = [3,4,5]
-        self.filter_num = 768
+        self.filter_num = 100
         self.initial_method = 'zero' # ['zero', 'normal', 'kaiming', 'xavier', 'k+n', 'k+x']
         self.positive_init_rate = 0.55
 
