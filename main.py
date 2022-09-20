@@ -275,14 +275,14 @@ def attack(args: SNNArgs):
     if args.model_mode == 'snn':
         build_surrogate(args=args)
         build_model(args)
-        args.tokenizer = EmbeddingEncoder(args.vocab_path, args.data_dir, args.max_len, model_mode="snn")
+        args.tokenizer = EmbeddingEncoder(args.vocab_path, args.data_dir, args.max_len, need_norm = True)
         if args.ensemble == 'True':
             model_wrapper = SNNPopulationModelWrapper(args, args.model, args.tokenizer)
         else:
             model_wrapper = SNNModelWrapper(args, args.model, args.tokenizer)
     elif args.model_mode == 'ann':
         build_model(args)
-        args.tokenizer = EmbeddingEncoder(args.vocab_path, args.data_dir, args.max_len, model_mode="ann")
+        args.tokenizer = EmbeddingEncoder(args.vocab_path, args.data_dir, args.max_len, need_norm = True)
         model_wrapper = ANNModelWrapper(args, args.model, args.tokenizer)
     attack = build_attacker(args, model_wrapper)
     # test_instances = EmbeddingEncoder.dataset_encode('data/sst2/test.txt')
@@ -302,11 +302,19 @@ def attack(args: SNNArgs):
         # for item in choices_arr[:attack_num]:
         #     choice_instances.append(test_instances[item])
         # dataset = CustomTextAttackDataset.from_instances(args.dataset_name, choice_instances)
-        dataset = textattack.datasets.HuggingFaceDataset("sst2", split="validation", shuffle=True)
+        # dataset = textattack.datasets.HuggingFaceDataset("sst2", split="validation", shuffle=True)
+        sample_list = []
+        with open(args.attack_text_path, "r") as f:
+            for line in f.readlines():
+                temp = line.split('\t')
+                sentence = temp[0].strip()
+                label = int(temp[1])
+                sample_list.append((sentence, label))
+        dataset = textattack.datasets.Dataset(sample_list)
         attack_num = min(args.attack_numbers, len(dataset))
         # attack_args = textattack.AttackArgs(num_examples=attack_num,log_to_csv=attack_log_dir+"/{}_log.csv".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())),
         #     checkpoint_interval=100,checkpoint_dir="checkpoints",disable_stdout=True)
-        attack_args = textattack.AttackArgs(num_examples=attack_num,log_to_csv=attack_log_dir+"/{}_log.csv".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())),
+        attack_args = textattack.AttackArgs(num_examples=attack_num, log_to_csv=attack_log_dir+"/{}_log.csv".format(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())),
             disable_stdout=True)
         attacker = Attacker(attack, dataset, attack_args)
         results_iterable = attacker.attack_dataset()

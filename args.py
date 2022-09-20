@@ -32,11 +32,13 @@ class SNNArgs(argparse.Namespace):
         self.optimizer_name = "Adamw"
         self.encode = "rate"  #['rate', 'latency']
         self.ensemble = "False"
+        
         self.max_len = 25
         self.attack_method = 'textfooler' # ["textfooler", "bae", "textbugger", "pso", "pwws", "deepwordbug"]
         self.attack_model_path = 'saved_models/best.pth'
         self.attack_times = 5
         self.attack_numbers = 1000
+        self.attack_text_path = f"data/{self.dataset_name}/test.txt"
 
         # for codebook
         self.use_codebook = 'False'
@@ -111,6 +113,7 @@ class SNNArgs(argparse.Namespace):
         self.test_data_path = f"data/{self.dataset_name}/test_u_3v_{self.dataset_name}_glove{self.hidden_dim}d_sent_len{self.sentence_length}.tensor_dataset"
         self.dev_data_path= f"data/{self.dataset_name}/dev_u_3v_{self.dataset_name}_glove{self.hidden_dim}d_sent_len{self.sentence_length}.tensor_dataset"
         self.data_augment_path = f"data/{self.dataset_name}/train_augment.txt"
+        self.attack_text_path = f"data/{self.dataset_name}/test.txt"
 
     @staticmethod
     def parse(verbose=False):

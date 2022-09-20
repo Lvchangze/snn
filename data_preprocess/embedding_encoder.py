@@ -3,13 +3,13 @@ import re
 import torch
 
 class EmbeddingEncoder():
-    def __init__(self, vocab_path, data_path, max_len=25, bias=3, model_mode="snn") -> None:
+    def __init__(self, vocab_path, data_path, max_len=25, bias=3, need_norm = True) -> None:
         self.vocab_path = vocab_path
         self.bias = bias
         self.data_path = data_path
         self.max_len = max_len
         self.glove_dict = {}
-        self.model_mode = model_mode
+        self.need_norm = need_norm
         self.get_embedding()
         pass
 
@@ -29,7 +29,7 @@ class EmbeddingEncoder():
         vairance_value = np.var(list(glove_dict.values()))
         left = mean_value - np.sqrt(vairance_value) * self.bias
         right = mean_value + np.sqrt(vairance_value) * self.bias
-        if self.model_mode == "snn":
+        if self.need_norm:
             for key in glove_dict.keys():
                 temp_clip = np.clip(glove_dict[key], left, right)
                 temp = (temp_clip - mean_value) / (self.bias * np.sqrt(vairance_value))
@@ -99,5 +99,5 @@ class EmbeddingEncoder():
 
 
 if __name__ == '__main__':
-    e = EmbeddingEncoder("data/glove.6B.100d.txt")
+    e = EmbeddingEncoder("data/glove.6B.300d.txt")
     e.get_embedding()
