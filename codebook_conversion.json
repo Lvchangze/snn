@@ -8,8 +8,9 @@
             "--model_mode",                   ["snn"],
             "--model_type",                   ["textcnn"],
             "--conversion_mode",              ["normalize"],
-            "--conversion_normalize_type",    ["model_base"],
-            "--use_seed",                     ["False"]
+            "--use_seed",                     ["False"],
+            "--use_codebook",                 ["True"],
+            "--num_steps",                    ["24"]
         ],
         "==more==": [
             [

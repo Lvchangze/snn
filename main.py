@@ -144,11 +144,11 @@ def build_criterion(args: SNNArgs):
                 args.loss_fn = SF.mse_temporal_loss()
         else:
             if args.loss == 'ce_count':
-                args.loss_fn = SF.ce_count_loss(population_code=True, num_classes=args.label_num)
+                args.loss_fn = SF.ce_count_loss(population_code=True, num_classes=args.ensemble_class)
             elif args.loss == "ce_rate":
-                args.loss_fn = SF.ce_rate_loss(population_code=True, num_classes=args.label_num)
+                args.loss_fn = SF.ce_rate_loss(population_code=True, num_classes=args.ensemble_class)
             elif args.loss == "mse_count":
-                args.loss_fn = SF.mse_count_loss(correct_rate=1.0, incorrect_rate=0.0, population_code=True, num_classes=args.label_num)
+                args.loss_fn = SF.mse_count_loss(correct_rate=1.0, incorrect_rate=0.0, population_code=True, num_classes=args.ensemble_class)
         
     return
 
@@ -205,7 +205,7 @@ def predict_accuracy(args, dataloader, model, num_steps, population_code=False, 
             data = data.to(args.device)
             targets = targets.to(args.device)
             spk_rec, _ = forward_pass(model, num_steps, data)
-
+            
             if population_code:
                 acc += SF.accuracy_rate(spk_rec, targets, population_code=True, num_classes=num_classes) * spk_rec.size(1)
             else:
@@ -237,7 +237,7 @@ def train(args):
 
     if args.mode == "conversion":
         args.model.load_state_dict(torch.load(args.conversion_model_path), strict=False)
-        acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=args.label_num)
+        acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=args.ensemble_class)
         output_message("Test acc of conversioned {} is: {}".format(args.model_type, acc))
 
     build_optimizer(args)
@@ -259,9 +259,9 @@ def train(args):
         output_message("Training epoch {}, avg_loss: {}.".format(epoch, avg_loss))
         saved_path = FileCreater.build_saving_file(args,description="-epoch{}".format(epoch))
         save_model_to_file(save_path=saved_path, model=args.model)
-        acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=args.label_num)
+        acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=args.ensemble_class)
         output_message("Test acc in epoch {} is: {}".format(epoch, acc))
-        dev_acc = predict_accuracy(args, args.dev_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=args.label_num)
+        dev_acc = predict_accuracy(args, args.dev_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=args.ensemble_class)
         output_message("Dev acc in epoch {} is: {}".format(epoch, dev_acc))
         acc_list.append(acc)
         if args.dead_neuron_checker == "True":
@@ -392,7 +392,19 @@ def ann_train(args: SNNArgs):
             data = data.to(args.device)
             target = target.to(args.device)
             output = args.model(data)
-            loss = args.loss_fn(output, target)
+            if args.ensemble == "False":
+                loss = args.loss_fn(output, target)
+            else:
+                tmp = torch.zeros(args.batch_size, args.ensemble_class).to(args.device)
+                for idx in range(args.ensemble_class):
+                    tmp[:, idx] = output[
+                        :,
+                        int(100 * idx / args.ensemble_class) : int(
+                                100 * (idx + 1) / args.ensemble_class
+                        )
+                    ].sum(-1)
+                loss = args.loss_fn(tmp, target)
+                
             args.optimizer.zero_grad()
             loss.backward()
             args.optimizer.step()
@@ -403,18 +415,41 @@ def ann_train(args: SNNArgs):
                 data = data.to(args.device)
                 y_batch = y_batch.to(args.device)
                 output = args.model(data)
-                correct += int(y_batch.eq(torch.max(output,1)[1]).sum())
+                if args.ensemble == "False":
+                    correct += int(y_batch.eq(torch.max(output,1)[1]).sum())
+                else:
+                    tmp = torch.zeros(args.batch_size, args.ensemble_class).to(args.device)
+                    for idx in range(args.ensemble_class):
+                        tmp[:, idx] = output[
+                            :,
+                            int(100 * idx / args.ensemble_class) : int(
+                                    100 * (idx + 1) / args.ensemble_class
+                            )
+                        ].sum(-1)
+                    correct += int(y_batch.eq(torch.max(tmp,1)[1]).sum())
             output_message(f"Epoch {epoch} Acc: {float(correct/len(test_dataset))}")
             acc_list.append(float(correct/len(test_dataset)))
             if float(correct/len(test_dataset)) >= np.max(acc_list):
                 saved_path = FileCreater.build_saving_file(args, description="-epoch{}".format(epoch))
                 save_model_to_file(save_path=saved_path, model=args.model)
+            
             correct = 0
             for data, y_batch in args.dev_dataloader:
                 data = data.to(args.device)
                 y_batch = y_batch.to(args.device)
                 output = args.model(data)
-                correct += int(y_batch.eq(torch.max(output,1)[1]).sum())
+                if args.ensemble == "False":
+                    correct += int(y_batch.eq(torch.max(output,1)[1]).sum())
+                else:
+                    tmp = torch.zeros(args.batch_size, args.ensemble_class).to(args.device)
+                    for idx in range(args.ensemble_class):
+                        tmp[:, idx] = output[
+                            :,
+                            int(100 * idx / args.ensemble_class) : int(
+                                    100 * (idx + 1) / args.ensemble_class
+                            )
+                        ].sum(-1)
+                    correct += int(y_batch.eq(torch.max(tmp,1)[1]).sum())
             output_message(f"Epoch {epoch} Acc: {float(correct/len(dev_dataset))}")
         
     output_message(f"Best Test Acc: {np.max(acc_list)}")
@@ -430,36 +465,46 @@ def conversion(args: SNNArgs):
             args.model = SNN_DPCNN(args, spike_grad=args.spike_grad).to(args.device)
         
         build_dataset(args=args, split='test')
-        build_rated_dataset(args, split='test')
-        build_dataloader(args=args, dataset=args.test_rated_dataset, split='test')
+
+        if args.use_codebook == 'False':
+            build_rated_dataset(args, split='test')
+            build_dataloader(args=args, dataset=args.test_rated_dataset, split='test')
+        else:
+            build_codebooked_dataset(args, split='test')
+            build_dataloader(args=args, dataset=args.test_codebooked_dataset, split='test')   
+
         
         saved_weights = torch.load(args.conversion_model_path)
         args.model.load_state_dict(saved_weights, strict=False)
 
-        acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=args.label_num)
+        acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=args.ensemble_class)
         output_message("Test acc of conversioned {} without normalize is: {}".format(args.model_type, acc))
 
-        if args.conversion_normalize_type == "model_base":
-            for key in saved_weights.keys():
-                # default: fc is output layer
-                if str(key).endswith("weight") and (not str(key).startswith("fc")) and (not str(key).startswith("output")):
-                    max_input_wt = torch.max(saved_weights[key])
-                    if max_input_wt > 0.0:
-                        saved_weights[key] = saved_weights[key] / max_input_wt
-            args.model.load_state_dict(saved_weights, strict=False)
-        elif args.conversion_normalize_type == "data_base":
-            output_layer_factor = 1.19
-            convs_layer_factor = 1.0021
-            for key in saved_weights.keys():
-                # default: fc is output layer
-                if str(key).startswith("fc") or str(key).startswith("output"):
-                    saved_weights[key] = saved_weights[key] / output_layer_factor
-                elif str(key).endswith("weight"):
-                    saved_weights[key] = saved_weights[key] / convs_layer_factor
-            args.model.load_state_dict(saved_weights, strict=False)
-
-        acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=args.label_num)
-        output_message("Test acc of conversioned {} after normalize is: {}".format(args.model_type, acc))
+        # if args.conversion_normalize_type == "model_base":
+        for key in saved_weights.keys():
+            # default: fc is output layer
+            if str(key).endswith("weight") and (not str(key).startswith("fc")) and (not str(key).startswith("output")):
+                max_input_wt = torch.max(saved_weights[key])
+                if max_input_wt > 0.0:
+                    saved_weights[key] = saved_weights[key] / max_input_wt
+        args.model.load_state_dict(saved_weights, strict=False)
+        acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=args.ensemble_class)
+        output_message("Test acc of conversioned {} after model_based normalize is: {}".format(args.model_type, acc))
+        
+        saved_weights = torch.load(args.conversion_model_path)
+        # elif args.conversion_normalize_type == "data_base":
+        output_layer_factor = 1.19
+        convs_layer_factor = 1.0021
+        for key in saved_weights.keys():
+            # default: fc is output layer
+            if str(key).startswith("fc") or str(key).startswith("output"):
+                saved_weights[key] = saved_weights[key] / output_layer_factor
+            elif str(key).endswith("weight"):
+                saved_weights[key] = saved_weights[key] / convs_layer_factor
+        args.model.load_state_dict(saved_weights, strict=False)
+        acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=args.ensemble_class)
+        output_message("Test acc of conversioned {} after data_based normalize is: {}".format(args.model_type, acc))
+    
     elif args.conversion_mode == "tune":
         train(args)
     pass

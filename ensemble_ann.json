@@ -16,12 +16,13 @@
                 "--weight_decay",       ["0.0"],
                 "--dropout_p",          ["0.0"],
                 "--optimizer_name",     ["Adamw"],
-                "--dataset_name",       ["imdb"],
-                "--sentence_length",    ["256"],
-                "--label_num",          ["2"],
+                "--dataset_name",       ["sst2"],
+                "--sentence_length",    ["25"],
+                "--label_num",          ["200"],
+                "--ensemble_class",     ["2"],
                 "--batch_size",         ["32"],
-                "--learning_rate",      ["1e-3"],
-                "--epochs",             ["50"]
+                "--learning_rate",      ["5e-4"],
+                "--epochs",             ["200"]
             ]
         ]
     }

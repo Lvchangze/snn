@@ -4,16 +4,19 @@
     "concurrency": 4,
     "configs": {
         "==base==": [
-            "--mode",                         ["distill"],
-            "--model_mode",                   ["ann"],
-            "--student_model_name",           ["dpcnn"],
+            "--mode",                         ["train"],
+            "--model_mode",                   ["snn"],
+            "--model_type",                   ["textcnn"],
             "--use_seed",                     ["False"],
             "--hidden_dim",                   ["300"]
         ],
         "==more==": [
             [
-                "--distill_loss_alpha",       ["0.3", "0.4", "0.5", "0.6"],
-                "--filter_num",               ["768"]
+                "--filter_num",               ["100"],
+                "--dataset_name",             ["sst2"],
+                "--label_num",                ["200"],
+                "--ensemble_class",           ["2"],
+                "--ensemble",                 ["True"]
             ]
         ]
     }

@@ -3,6 +3,7 @@ import numpy as np
 import pickle
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 from model.textcnn import SNN_TextCNN
 from snntorch import spikegen
@@ -49,28 +50,43 @@ from transformers import BertTokenizer
 #     dataset = pickle.load(f)
 #     print(dataset[1])
 
-def get_samples_from_text(datafile_path):
-    sample_list = []
-    with open(datafile_path, "r") as f:
-        for line in f.readlines():
-            temp = line.split('\t')
-            sentence = temp[0].strip()
-            label = int(temp[1])
-            sample_list.append((sentence, label))
-    return sample_list
-dataset_name = "subj"
-samples = get_samples_from_text(f"data/{dataset_name}/all.txt")
-length = len(samples)
-random.shuffle(samples)
-train_samples = samples[:int(length * 0.85)]
-dev_samples = samples[int(length * 0.85):int(length * 0.9)]
-test_samples = samples[int(length * 0.9):]
-with open(f"data/{dataset_name}/train.txt", "w", encoding="utf-8")as f:
-    for sample in train_samples:
-        f.write(sample[0] + "\t" +str(sample[1])+"\n")
-with open(f"data/{dataset_name}/dev.txt", "w", encoding="utf-8")as f:
-    for sample in dev_samples:
-        f.write(sample[0] + "\t" +str(sample[1])+"\n")
-with open(f"data/{dataset_name}/test.txt", "w", encoding="utf-8")as f:
-    for sample in test_samples:
-        f.write(sample[0] + "\t" +str(sample[1])+"\n")
+# def get_samples_from_text(datafile_path):
+#     sample_list = []
+#     with open(datafile_path, "r") as f:
+#         for line in f.readlines():
+#             temp = line.split('\t')
+#             sentence = temp[0].strip()
+#             label = int(temp[1])
+#             sample_list.append((sentence, label))
+#     return sample_list
+# dataset_name = "subj"
+# samples = get_samples_from_text(f"data/{dataset_name}/all.txt")
+# length = len(samples)
+# random.shuffle(samples)
+# train_samples = samples[:int(length * 0.85)]
+# dev_samples = samples[int(length * 0.85):int(length * 0.9)]
+# test_samples = samples[int(length * 0.9):]
+# with open(f"data/{dataset_name}/train.txt", "w", encoding="utf-8")as f:
+#     for sample in train_samples:
+#         f.write(sample[0] + "\t" +str(sample[1])+"\n")
+# with open(f"data/{dataset_name}/dev.txt", "w", encoding="utf-8")as f:
+#     for sample in dev_samples:
+#         f.write(sample[0] + "\t" +str(sample[1])+"\n")
+# with open(f"data/{dataset_name}/test.txt", "w", encoding="utf-8")as f:
+#     for sample in test_samples:
+#         f.write(sample[0] + "\t" +str(sample[1])+"\n")
+
+# input = torch.randn(3, 5, requires_grad=True)
+# target = torch.randint(5, (3,), dtype=torch.int64)
+# print(input)
+# print(target)
+# loss = F.cross_entropy(input, target)
+# print(loss)
+# input = torch.tensor([[50.0, 100.0],[64.0, 7.53]])
+# output = torch.tensor([0, 0])
+# print(F.cross_entropy(input, output))
+# log_softmax_fn = nn.LogSoftmax(dim=-1)
+# loss_fn = nn.NLLLoss()
+# print(log_softmax_fn(input))
+# print(loss_fn(log_softmax_fn(input), output))
+print(torch.zeros(3,5))

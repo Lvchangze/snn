@@ -32,6 +32,7 @@ class SNNArgs(argparse.Namespace):
         self.optimizer_name = "Adamw"
         self.encode = "rate"  #['rate', 'latency']
         self.ensemble = "False"
+        self.ensemble_class = 2
         
         self.max_len = 25
         self.attack_method = 'textfooler' # ["textfooler", "bae", "textbugger", "pso", "pwws", "deepwordbug"]
