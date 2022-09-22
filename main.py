@@ -205,7 +205,6 @@ def predict_accuracy(args, dataloader, model, num_steps, population_code=False, 
             data = data.to(args.device)
             targets = targets.to(args.device)
             spk_rec, _ = forward_pass(model, num_steps, data)
-            
             if population_code:
                 acc += SF.accuracy_rate(spk_rec, targets, population_code=True, num_classes=num_classes) * spk_rec.size(1)
             else:
@@ -395,19 +394,21 @@ def ann_train(args: SNNArgs):
             if args.ensemble == "False":
                 loss = args.loss_fn(output, target)
             else:
-                tmp = torch.zeros(args.batch_size, args.ensemble_class).to(args.device)
+                tmp = torch.zeros(output.shape[0], args.ensemble_class).to(args.device)
                 for idx in range(args.ensemble_class):
                     tmp[:, idx] = output[
                         :,
-                        int(100 * idx / args.ensemble_class) : int(
-                                100 * (idx + 1) / args.ensemble_class
+                        int(args.label_num * idx / args.ensemble_class) : int(
+                                args.label_num * (idx + 1) / args.ensemble_class
                         )
                     ].sum(-1)
+                # scale loss
+                # tmp = tmp / 1
                 loss = args.loss_fn(tmp, target)
-                
             args.optimizer.zero_grad()
             loss.backward()
             args.optimizer.step()
+        
         args.model.eval()
         with torch.no_grad():
             correct = 0
@@ -418,14 +419,15 @@ def ann_train(args: SNNArgs):
                 if args.ensemble == "False":
                     correct += int(y_batch.eq(torch.max(output,1)[1]).sum())
                 else:
-                    tmp = torch.zeros(args.batch_size, args.ensemble_class).to(args.device)
+                    tmp = torch.zeros(output.shape[0], args.ensemble_class).to(args.device)
                     for idx in range(args.ensemble_class):
-                        tmp[:, idx] = output[
+                        tmp[:, idx] = (output[
                             :,
-                            int(100 * idx / args.ensemble_class) : int(
-                                    100 * (idx + 1) / args.ensemble_class
+                            int(args.label_num * idx / args.ensemble_class) : int(
+                                    args.label_num * (idx + 1) / args.ensemble_class
                             )
                         ].sum(-1)
+                        )
                     correct += int(y_batch.eq(torch.max(tmp,1)[1]).sum())
             output_message(f"Epoch {epoch} Acc: {float(correct/len(test_dataset))}")
             acc_list.append(float(correct/len(test_dataset)))
@@ -441,14 +443,15 @@ def ann_train(args: SNNArgs):
                 if args.ensemble == "False":
                     correct += int(y_batch.eq(torch.max(output,1)[1]).sum())
                 else:
-                    tmp = torch.zeros(args.batch_size, args.ensemble_class).to(args.device)
+                    tmp = torch.zeros(output.shape[0], args.ensemble_class).to(args.device)
                     for idx in range(args.ensemble_class):
-                        tmp[:, idx] = output[
+                        tmp[:, idx] = (output[
                             :,
-                            int(100 * idx / args.ensemble_class) : int(
-                                    100 * (idx + 1) / args.ensemble_class
+                            int(args.label_num * idx / args.ensemble_class) : int(
+                                    args.label_num * (idx + 1) / args.ensemble_class
                             )
                         ].sum(-1)
+                        )
                     correct += int(y_batch.eq(torch.max(tmp,1)[1]).sum())
             output_message(f"Epoch {epoch} Acc: {float(correct/len(dev_dataset))}")
         

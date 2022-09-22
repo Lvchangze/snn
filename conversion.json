@@ -7,7 +7,7 @@
             "--mode",                         ["conversion"],
             "--model_mode",                   ["snn"],
             "--model_type",                   ["textcnn"],
-            "--conversion_mode",              ["tune"],
+            "--conversion_mode",              ["normalize"],
             "--conversion_normalize_type",    ["model_base"],
             "--use_seed",                     ["False"]
         ],
@@ -17,7 +17,8 @@
                 "--hidden_dim",               ["300"],
                 "--dataset_name",             ["sst2"],
                 "--sentence_length",          ["25"],
-                "--conversion_model_path",    ["/home/lvchangze/snn/saved_models/model_modeann-modetrain-model_typetextcnn-dataset_namesst2-sentence_length25-dropout_p0.5-weight_decay0.001-batch_size32-learning_rate0.0005/2022-09-19 06:42:51.log--epoch57.pth"]
+                "--ensemble",                 ["True"],
+                "--conversion_model_path",    ["saved_models/2022-09-19 06:42:51.log--epoch57.pth"]
             ]
         ]
     }

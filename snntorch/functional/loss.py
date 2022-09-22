@@ -87,7 +87,6 @@ class ce_rate_loss(LossFunctions):
         loss_fn = nn.NLLLoss()
         device, num_steps, num_outputs = self._prediction_check(spk_out)
         loss = torch.zeros((1), dtype=dtype, device=device)
-        
         if self.population_code:
             for step in range(num_steps):
                 pop_code = torch.zeros(tuple([spk_out.size(1)] + [self.num_classes])).to(device)
