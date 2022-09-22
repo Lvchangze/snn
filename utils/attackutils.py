@@ -10,6 +10,11 @@ from snntorch import spikegen
 from textattack.attacker import Attacker
 from textattack.datasets import HuggingFaceDataset
 from textattack.constraints.pre_transformation import InputColumnModification
+from textattack.transformations import WordSwapEmbedding
+from textattack.constraints.overlap import MaxWordsPerturbed
+from textattack.goal_functions import UntargetedClassification
+from textattack.constraints.semantics import WordEmbeddingDistance
+from textattack.constraints.semantics.sentence_encoders import UniversalSentenceEncoder
 from textattack.attack_recipes import (PWWSRen2019,
                                        DeepWordBugGao2018,
                                        PSOZang2020,
@@ -39,6 +44,27 @@ def build_attacker(args:SNNArgs, model:nn.Module):
     # attacker.pre_transformation_constraints.append(
     #     InputColumnModification(["premise", "hypothesis"], {args.nli_not_modify})
     # )
+    if args.attack_method in ['textfooler', 'pwws', 'textbugger', 'pso']:
+        attack.transformation = WordSwapEmbedding(max_candidates=args.neighbour_vocab_size)
+        for constraint in attack.constraints:
+            if isinstance(constraint, WordEmbeddingDistance):
+                attack.constraints.remove(constraint)
+    attack.constraints.append(MaxWordsPerturbed(max_percent=args.modify_ratio))
+    use_constraint = UniversalSentenceEncoder(
+        threshold=args.sentence_similarity,
+        metric="angular",
+        compare_against_original=False,
+        window_size=15,
+        skip_text_shorter_than_window=True,
+    )
+    attack.constraints.append(use_constraint)
+
+    input_column_modification = InputColumnModification(
+        ["premise", "hypothesis"], {"premise"}
+    )
+    attack.pre_transformation_constraints.append(input_column_modification)
+
+    attack.goal_function = UntargetedClassification(model, query_budget=args.query_budget_size)
     return attack
 
 
