@@ -49,6 +49,7 @@ def build_attacker(args:SNNArgs, model:nn.Module):
         for constraint in attack.constraints:
             if isinstance(constraint, WordEmbeddingDistance):
                 attack.constraints.remove(constraint)
+    
     attack.constraints.append(MaxWordsPerturbed(max_percent=args.modify_ratio))
     use_constraint = UniversalSentenceEncoder(
         threshold=args.sentence_similarity,
