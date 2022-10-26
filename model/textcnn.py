@@ -18,16 +18,16 @@ class SNN_TextCNN(nn.Module):
             for filter_size in args.filters
         ])
         self.middle_lifs = nn.ModuleList([
-            snn.Leaky(beta=args.beta, spike_grad = spike_grad, init_hidden=True, threshold=1.0)
+            snn.Leaky(beta=args.beta, spike_grad = spike_grad, init_hidden=True, threshold=args.threshold)
             for _ in args.filters
         ])
         self.avgpool_1 = nn.ModuleList([
             nn.AvgPool2d((args.sentence_length - filter_size + 1, 1)) for filter_size in args.filters
         ])
-        self.lif1 = snn.Leaky(beta=args.beta, spike_grad=spike_grad, init_hidden=True, threshold=1.0)
+        self.lif1 = snn.Leaky(beta=args.beta, spike_grad=spike_grad, init_hidden=True, threshold=args.threshold)
         self.fc_1 = nn.Linear(len(args.filters)*args.filter_num, args.label_num)
         # self.fc_2 = nn.Linear(args.hidden_layer_num, args.label_num)
-        self.lif2 = snn.Leaky(beta=args.beta, spike_grad=spike_grad, init_hidden=True, threshold=1.0, output=True)
+        self.lif2 = snn.Leaky(beta=args.beta, spike_grad=spike_grad, init_hidden=True, threshold=args.threshold, output=True)
     
     def initial(self):
         for c in self.convs_1:

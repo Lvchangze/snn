@@ -39,6 +39,7 @@ class GoalFunction(ReprMixin, ABC):
         maximizable=False,
         use_cache=True,
         query_budget=float("inf"),
+        # query_budget=200,
         model_batch_size=32,
         model_cache_size=2**20,
     ):

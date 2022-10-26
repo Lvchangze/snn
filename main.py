@@ -18,7 +18,7 @@ from snntorch.backprop import BPTT
 import snntorch.functional as SF
 from snntorch import spikegen
 import snntorch.surrogate as surrogate
-from model import SNN_TextCNN, ANN_TextCNN, ANN_BiLSTM, SNN_BiLSTM, ANN_DPCNN, SNN_DPCNN
+from model import SNN_TextCNN, ANN_TextCNN, ANN_BiLSTM, SNN_BiLSTM, ANN_DPCNN, SNN_DPCNN, Normal_TextCNN
 import numpy as np
 from utils.filecreater import FileCreater
 from utils.monitor import Monitor
@@ -157,6 +157,8 @@ def build_model(args: SNNArgs):
     if args.model_mode == "ann":
         if args.model_type == "textcnn":
             args.model = ANN_TextCNN(args).to(args.device)
+        elif args.model_type == "normal_textcnn":
+            args.model = Normal_TextCNN(args).to(args.device)
         elif args.model_type == "lstm":
             args.model = ANN_BiLSTM(args).to(args.device)
         elif args.model_type == "dpcnn":
@@ -218,21 +220,21 @@ def train(args):
     build_model(args)
     build_dataset(args=args)
     build_dataset(args=args, split='test')
-    build_dataset(args=args, split='dev')
+    # build_dataset(args=args, split='dev')
     if args.use_codebook == 'False':
         build_rated_dataset(args)
         build_dataloader(args=args, dataset=args.train_rated_dataset)
         build_rated_dataset(args, split='test')
         build_dataloader(args=args, dataset=args.test_rated_dataset, split='test')
-        build_rated_dataset(args, split='dev')
-        build_dataloader(args=args, dataset=args.dev_rated_dataset, split='dev')
+        # build_rated_dataset(args, split='dev')
+        # build_dataloader(args=args, dataset=args.dev_rated_dataset, split='dev')
     else:
         build_codebooked_dataset(args=args)
         build_dataloader(args=args, dataset=args.train_codebooked_dataset)
         build_codebooked_dataset(args, split='test')
         build_dataloader(args=args, dataset=args.test_codebooked_dataset, split='test')
-        build_codebooked_dataset(args, split='dev')
-        build_dataloader(args=args, dataset=args.dev_codebooked_dataset, split='dev')    
+        # build_codebooked_dataset(args, split='dev')
+        # build_dataloader(args=args, dataset=args.dev_codebooked_dataset, split='dev')    
 
     if args.mode == "conversion":
         args.model.load_state_dict(torch.load(args.conversion_model_path), strict=False)
@@ -256,13 +258,18 @@ def train(args):
         output_message("Dead_neuron_rate in epoch {}: {}.".format(epoch, dead_neuron_rate))
         output_message("Too_Activate_neuron_rate in epoch {}: {}.".format(epoch, too_activate_neuron_rate))
         output_message("Training epoch {}, avg_loss: {}.".format(epoch, avg_loss))
-        saved_path = FileCreater.build_saving_file(args,description="-epoch{}".format(epoch))
-        save_model_to_file(save_path=saved_path, model=args.model)
+        
         acc = predict_accuracy(args, args.test_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=args.ensemble_class)
         output_message("Test acc in epoch {} is: {}".format(epoch, acc))
-        dev_acc = predict_accuracy(args, args.dev_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=args.ensemble_class)
-        output_message("Dev acc in epoch {} is: {}".format(epoch, dev_acc))
         acc_list.append(acc)
+
+        if acc >= np.max(acc_list):
+            saved_path = FileCreater.build_saving_file(args,description="-epoch{}".format(epoch))
+            save_model_to_file(save_path=saved_path, model=args.model)
+            
+        # dev_acc = predict_accuracy(args, args.dev_dataloader, args.model, args.num_steps, population_code=bool(args.ensemble), num_classes=args.ensemble_class)
+        # output_message("Dev acc in epoch {} is: {}".format(epoch, dev_acc))
+        
         if args.dead_neuron_checker == "True":
             Monitor.print_results_by_epoch(epoch)
     output_message("Mean Dead_neuron_rate: {}".format(np.mean(dead_neuron_rate_list)))
@@ -370,10 +377,10 @@ def ann_train(args: SNNArgs):
     
     build_dataset(args=args)
     build_dataset(args=args, split='test')
-    build_dataset(args=args, split='dev')
+    # build_dataset(args=args, split='dev')
     build_dataloader(args=args, dataset=args.train_dataset)
     build_dataloader(args=args, dataset=args.test_dataset, split='test')
-    build_dataloader(args=args, dataset=args.dev_dataset, split='dev')
+    # build_dataloader(args=args, dataset=args.dev_dataset, split='dev')
 
     build_model(args)
     build_optimizer(args)
@@ -381,7 +388,7 @@ def ann_train(args: SNNArgs):
 
     # build_dataloader(args=args, dataset=get_tensor_dataset("data/sst2/train.txt"))
     test_dataset = args.test_dataset
-    dev_dataset = args.dev_dataset
+    # dev_dataset = args.dev_dataset
     # build_dataloader(args=args, dataset=test_dataset, split='test')
 
     acc_list = []
@@ -435,25 +442,25 @@ def ann_train(args: SNNArgs):
                 saved_path = FileCreater.build_saving_file(args, description="-epoch{}".format(epoch))
                 save_model_to_file(save_path=saved_path, model=args.model)
             
-            correct = 0
-            for data, y_batch in args.dev_dataloader:
-                data = data.to(args.device)
-                y_batch = y_batch.to(args.device)
-                output = args.model(data)
-                if args.ensemble == "False":
-                    correct += int(y_batch.eq(torch.max(output,1)[1]).sum())
-                else:
-                    tmp = torch.zeros(output.shape[0], args.ensemble_class).to(args.device)
-                    for idx in range(args.ensemble_class):
-                        tmp[:, idx] = (output[
-                            :,
-                            int(args.label_num * idx / args.ensemble_class) : int(
-                                    args.label_num * (idx + 1) / args.ensemble_class
-                            )
-                        ].sum(-1)
-                        )
-                    correct += int(y_batch.eq(torch.max(tmp,1)[1]).sum())
-            output_message(f"Epoch {epoch} Acc: {float(correct/len(dev_dataset))}")
+            # correct = 0
+            # for data, y_batch in args.dev_dataloader:
+            #     data = data.to(args.device)
+            #     y_batch = y_batch.to(args.device)
+            #     output = args.model(data)
+            #     if args.ensemble == "False":
+            #         correct += int(y_batch.eq(torch.max(output,1)[1]).sum())
+            #     else:
+            #         tmp = torch.zeros(output.shape[0], args.ensemble_class).to(args.device)
+            #         for idx in range(args.ensemble_class):
+            #             tmp[:, idx] = (output[
+            #                 :,
+            #                 int(args.label_num * idx / args.ensemble_class) : int(
+            #                         args.label_num * (idx + 1) / args.ensemble_class
+            #                 )
+            #             ].sum(-1)
+            #             )
+            #         correct += int(y_batch.eq(torch.max(tmp,1)[1]).sum())
+            # output_message(f"Epoch {epoch} Acc: {float(correct/len(dev_dataset))}")
         
     output_message(f"Best Test Acc: {np.max(acc_list)}")
 
@@ -529,10 +536,10 @@ def distill(args: SNNArgs):
     
     build_dataset(args=args, split='test')
     build_dataloader(args=args, dataset=args.test_dataset, split='test')
-    build_dataset(args=args, split='dev')
-    build_dataloader(args=args, dataset=args.dev_dataset, split='dev')
+    # build_dataset(args=args, split='dev')
+    # build_dataloader(args=args, dataset=args.dev_dataset, split='dev')
     test_dataset = args.test_dataset
-    dev_dataset = args.dev_dataset
+    # dev_dataset = args.dev_dataset
 
     def to_device(x, device):
         for key in x:
@@ -601,7 +608,7 @@ def distill(args: SNNArgs):
                 # print(f"student_hidden_states shape:{student_hidden_states.shape}") # batch * fitter_num
                 embed_loss = F.mse_loss(student_embed, teacher_embed)
                 logit_loss = F.mse_loss(student_logits, teacher_logits)
-                loss = args.distill_loss_alpha * logit_loss + (1-args.distill_loss_alpha) * embed_loss
+                loss = args.logit_loss_weight * logit_loss + args.feature_loss_weight * embed_loss
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()

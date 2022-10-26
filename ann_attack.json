@@ -1,0 +1,53 @@
+{
+    "executor": "/home/lvchangze/miniconda3/envs/snn/bin/python main.py",
+    "cuda": [0,1,2,3],
+    "concurrency": 4,
+    "configs": {
+        "==base==": [
+            "--mode",                   ["attack"],
+            "--model_mode",             ["ann"],
+            "--model_type",             ["textcnn"],
+            "--use_seed",               ["False"],
+            "--ensemble",               ["False"],
+            "--modify_ratio",           ["0.3"]
+        ],
+        "==more==": [
+            [
+                "--dataset_name",       ["sst2"],
+                "--max_len",            ["25"],
+                "--dropout_p",          ["0.5"],
+                "--attack_model_path",  ["/home/lvchangze/snn/saved_models/model_modeann-modetrain-model_typetextcnn-dataset_namesst2-sentence_length25-dropout_p0.5-weight_decay0.0-batch_size32-learning_rate0.0001/2022-09-22 00:09:46.log--epoch181.pth"],
+                "--attack_method",      ["textfooler", "bae", "textbugger", "pso", "pwws", "deepwordbug"],
+                "--ensemble",           ["False"],
+                "--label_num",          ["2"]
+            ],
+            [
+                "--dataset_name",       ["mr"],
+                "--max_len",            ["35"],
+                "--dropout_p",          ["0.5"],
+                "--attack_model_path",  ["/home/lvchangze/snn/saved_models/model_modeann-modetrain-model_typetextcnn-dataset_namemr-sentence_length35-dropout_p0.5-weight_decay0.0-batch_size32-learning_rate0.0001/2022-09-21 23:47:00.log--epoch181.pth"],
+                "--attack_method",      ["textfooler", "bae", "textbugger", "pso", "pwws", "deepwordbug"],
+                "--ensemble",           ["False"],
+                "--label_num",          ["2"]
+            ],
+            [
+                "--dataset_name",       ["subj"],
+                "--max_len",            ["35"],
+                "--dropout_p",          ["0.5"],
+                "--attack_model_path",  ["/home/lvchangze/snn/saved_models/model_modeann-modetrain-model_typetextcnn-dataset_namesubj-sentence_length35-dropout_p0.5-weight_decay0.0-batch_size32-learning_rate0.0005/2022-09-21 23:45:20.log--epoch174.pth"],
+                "--attack_method",      ["textfooler", "bae", "textbugger", "pso", "pwws", "deepwordbug"],
+                "--ensemble",           ["False"],
+                "--label_num",          ["2"]
+            ],
+            [
+                "--dataset_name",       ["sst5"],
+                "--max_len",            ["25"],
+                "--dropout_p",          ["0.5"],
+                "--attack_model_path",  ["/home/lvchangze/snn/saved_models/model_modeann-modetrain-model_typetextcnn-dataset_namesst5-sentence_length25-dropout_p0.5-weight_decay0.0-batch_size32-learning_rate0.0001/2022-09-21 23:45:51.log--epoch196.pth"],
+                "--attack_method",      ["textfooler", "bae", "textbugger", "pso", "pwws", "deepwordbug"],
+                "--ensemble",           ["False"],
+                "--label_num",          ["5"]
+            ]
+        ]
+    }
+}

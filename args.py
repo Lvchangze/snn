@@ -11,7 +11,7 @@ class SNNArgs(argparse.Namespace):
         # SUGGESTION: write exp with args_for_logging and save them in every manytask json file 
 
         # training details
-        self.mode = "conversion"  # ['train', 'attack', 'conversion', 'distill']
+        self.mode = "distill"  # ['train', 'attack', 'conversion', 'distill']
         self.model_mode = "snn"   # ['snn', 'ann']
         self.model_type = 'dpcnn'  # ["textcnn", "lstm", "dpcnn"]
         
@@ -37,9 +37,13 @@ class SNNArgs(argparse.Namespace):
         self.max_len = 25
         self.attack_method = 'textfooler' # ["textfooler", "bae", "textbugger", "pso", "pwws", "deepwordbug"]
         self.attack_model_path = 'saved_models/best.pth'
-        self.attack_times = 5
+        self.attack_times = 1
         self.attack_numbers = 1000
         self.attack_text_path = f"data/{self.dataset_name}/test.txt"
+        self.neighbour_vocab_size = 15
+        self.modify_ratio = 0.1
+        # self.query_budget_size = 50
+        self.sentence_similarity = 0.8
 
         # for codebook
         self.use_codebook = 'False'
@@ -48,9 +52,10 @@ class SNNArgs(argparse.Namespace):
         
         # file saver
         # please modify the renew function together
-        self.data_path = f"data/{self.dataset_name}/train_u_3v_{self.dataset_name}_glove{self.hidden_dim}d_sent_len{self.sentence_length}.tensor_dataset"
-        self.test_data_path = f"data/{self.dataset_name}/test_u_3v_{self.dataset_name}_glove{self.hidden_dim}d_sent_len{self.sentence_length}.tensor_dataset"
-        self.dev_data_path = f"data/{self.dataset_name}/dev_u_3v_{self.dataset_name}_glove{self.hidden_dim}d_sent_len{self.sentence_length}.tensor_dataset"
+        self.pretrain_embedding_name = "glove" # ['glove', 'word2vec']
+        self.data_path = f"data/{self.dataset_name}/train_u_3v_{self.dataset_name}_{self.pretrain_embedding_name}{self.hidden_dim}d_sent_len{self.sentence_length}.tensor_dataset"
+        self.test_data_path = f"data/{self.dataset_name}/test_u_3v_{self.dataset_name}_{self.pretrain_embedding_name}{self.hidden_dim}d_sent_len{self.sentence_length}.tensor_dataset"
+        self.dev_data_path = f"data/{self.dataset_name}/dev_u_3v_{self.dataset_name}_{self.pretrain_embedding_name}{self.hidden_dim}d_sent_len{self.sentence_length}.tensor_dataset"
         self.workspace = '/home/lvchangze/snn'
         self.data_dir = os.path.join(self.workspace, "data", self.dataset_name)
         self.logging_dir = os.path.join(self.workspace, 'logs')
@@ -65,6 +70,7 @@ class SNNArgs(argparse.Namespace):
         self.filter_num = 100
         self.initial_method = 'zero' # ['zero', 'normal', 'kaiming', 'xavier', 'k+n', 'k+x']
         self.positive_init_rate = 0.55
+        self.threshold = 1.0
 
         # monitor
         self.dead_neuron_checker = "False"
@@ -82,8 +88,9 @@ class SNNArgs(argparse.Namespace):
 
         # distill
         self.teacher_model_path = "saved_models/bert-base-uncased_2022-09-14 18:27:35_epoch0_0.9335529928610653"
-        self.distill_loss_alpha = 0.0
-        self.student_model_name = "lstm"
+        self.logit_loss_weight = 1.0
+        self.feature_loss_weight = 10
+        self.student_model_name = "dpcnn"
         self.distill_batch = 32
         self.distill_epoch = 30
         self.data_augment_path = f"data/{self.dataset_name}/train_augment.txt"
@@ -95,24 +102,24 @@ class SNNArgs(argparse.Namespace):
 
     def renew_args(self):
         if self.model_mode == "ann" and self.mode == "train":
-            self.args_for_logging = ["model_mode", "mode", "model_type", "dataset_name", "sentence_length", "dropout_p", "weight_decay", "batch_size", "learning_rate"]
+            self.args_for_logging = ["model_mode", "mode", "model_type", "dataset_name", "sentence_length", "dropout_p", "weight_decay", "batch_size", "learning_rate", "label_num"]
         elif self.mode == "attack":
             self.args_for_logging = ["model_mode", "mode", "model_type", "dataset_name", "attack_method","attack_times","attack_numbers"]
         elif self.model_mode == "snn" and self.mode == "train":
-            self.args_for_logging = ["model_mode", "mode", "model_type", "dataset_name", "label_num", "positive_init_rate", 'num_steps', 'learning_rate']
+            self.args_for_logging = ["model_mode", "mode", "model_type", "dataset_name", "label_num", "positive_init_rate", 'num_steps', 'learning_rate', "label_num"]
         elif self.mode == "conversion" and self.conversion_mode == "normalize":
             self.args_for_logging = ["model_mode", "mode", "conversion_mode", "model_type", "dataset_name", 'conversion_normalize_type']
         elif self.mode == "conversion" and self.conversion_mode == "tune":
             self.args_for_logging = ["model_mode", "mode", "conversion_mode", "model_type", "dataset_name", "conversion_normalize_type", "label_num", "positive_init_rate", 'num_steps', 'learning_rate']
         elif self.mode == "distill":
-            self.args_for_logging = ["model_mode", "mode", "student_model_name", "dataset_name", "label_num", "distill_loss_alpha", "student_model_name", "distill_batch", "distill_epoch"]
+            self.args_for_logging = ["model_mode", "mode", "student_model_name", "dataset_name", "label_num", "logit_loss_weight","feature_loss_weight" ,"student_model_name", "distill_batch", "distill_epoch"]
         self.data_dir = os.path.join(self.workspace, "data", self.dataset_name)
         self.logging_dir = os.path.join(self.workspace, 'logs')
         self.saving_dir = os.path.join(self.workspace, "saved_models")
         self.vocab_path = os.path.join(self.workspace, f"data/glove.6B.{self.hidden_dim}d.txt")
-        self.data_path = f"data/{self.dataset_name}/train_u_3v_{self.dataset_name}_glove{self.hidden_dim}d_sent_len{self.sentence_length}.tensor_dataset"
-        self.test_data_path = f"data/{self.dataset_name}/test_u_3v_{self.dataset_name}_glove{self.hidden_dim}d_sent_len{self.sentence_length}.tensor_dataset"
-        self.dev_data_path= f"data/{self.dataset_name}/dev_u_3v_{self.dataset_name}_glove{self.hidden_dim}d_sent_len{self.sentence_length}.tensor_dataset"
+        self.data_path = f"data/{self.dataset_name}/train_u_3v_{self.dataset_name}_{self.pretrain_embedding_name}{self.hidden_dim}d_sent_len{self.sentence_length}.tensor_dataset"
+        self.test_data_path = f"data/{self.dataset_name}/test_u_3v_{self.dataset_name}_{self.pretrain_embedding_name}{self.hidden_dim}d_sent_len{self.sentence_length}.tensor_dataset"
+        self.dev_data_path = f"data/{self.dataset_name}/dev_u_3v_{self.dataset_name}_{self.pretrain_embedding_name}{self.hidden_dim}d_sent_len{self.sentence_length}.tensor_dataset"
         self.data_augment_path = f"data/{self.dataset_name}/train_augment.txt"
         self.attack_text_path = f"data/{self.dataset_name}/test.txt"
 

@@ -65,7 +65,7 @@ def build_attacker(args:SNNArgs, model:nn.Module):
     )
     attack.pre_transformation_constraints.append(input_column_modification)
 
-    attack.goal_function = UntargetedClassification(model, query_budget=args.query_budget_size)
+    # attack.goal_function = UntargetedClassification(model, query_budget=args.query_budget_size)
     return attack
 
 

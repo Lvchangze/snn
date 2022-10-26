@@ -89,5 +89,5 @@ from transformers import BertTokenizer
 # loss_fn = nn.NLLLoss()
 # print(log_softmax_fn(input))
 # print(loss_fn(log_softmax_fn(input), output))
-pop_code = torch.zeros(tuple([32] + [5]))
-print(pop_code)
+# pop_code = torch.zeros(tuple([32] + [5]))
+# print(pop_code)
