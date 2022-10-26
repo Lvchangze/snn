@@ -636,16 +636,16 @@ def distill(args: SNNArgs):
                 correct += int(y_batch.eq(torch.max(output,1)[1]).sum())
             output_message(f"Epoch {epoch} Acc: {float(correct/len(test_dataset))}")
 
-            dev_correct = 0
-            for data, y_batch in args.dev_dataloader:
-                data = data.to(args.device)
-                y_batch = y_batch.to(args.device)
-                if args.student_model_name == "dpcnn":
-                    _, output = student_model(data)
-                else:
-                    output = student_model(data)
-                dev_correct += int(y_batch.eq(torch.max(output,1)[1]).sum())
-            output_message(f"Epoch {epoch} Acc: {float(dev_correct/len(dev_dataset))}")
+            # dev_correct = 0
+            # for data, y_batch in args.dev_dataloader:
+            #     data = data.to(args.device)
+            #     y_batch = y_batch.to(args.device)
+            #     if args.student_model_name == "dpcnn":
+            #         _, output = student_model(data)
+            #     else:
+            #         output = student_model(data)
+            #     dev_correct += int(y_batch.eq(torch.max(output,1)[1]).sum())
+            # output_message(f"Epoch {epoch} Acc: {float(dev_correct/len(dev_dataset))}")
 
 
 if __name__ == "__main__":
