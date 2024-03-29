@@ -1,4 +1,4 @@
-# Spiking Convolutional Neural Networks for Text Classification
+# Spiking Convolutional Neural Networks for Text Classification (ICLR 2023 Poster)
 ## Install Requirements
 
 ```shell
