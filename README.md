@@ -1,4 +1,7 @@
-# Spiking Convolutional Neural Networks for Text Classification (ICLR 2023 Poster)
+# Spiking Convolutional Neural Networks for Text Classification (ICLR 2023, Poster)
+
+https://openreview.net/forum?id=pgU3k7QXuz0
+
 ## Install Requirements
 
 ```shell
