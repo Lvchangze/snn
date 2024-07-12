@@ -72,4 +72,4 @@ python snn_wopretrain_tensor_encoder.py
 - Please prepare dateset files and pre-trained word embedding in yourself.
 - Shell commands above only show how to run the program in different modes. Detailed hyper-parameters can be set as you want.
 - Set parameter **random_tensor** to **True** when doing conversion + Normalization or fine-tune if you use random initial embedding.
-- Some large files are uploaded here: link: https://pan.baidu.com/s/1inJa_vH4I6WlIyD5CgJIOA, code: cbdk
+- Some large files are uploaded here: link: https://pan.baidu.com/s/19l81POzDUj4mBAmncCGkiA, code: cehb
